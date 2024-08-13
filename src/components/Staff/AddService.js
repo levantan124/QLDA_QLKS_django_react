@@ -1,94 +1,37 @@
 /** @jsx jsx */
 import { css, jsx } from '@emotion/react';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Container from '../Global/Container';
-import { authAPI, endpoints } from '../../configs/APIs';
-import { SnackbarProvider, useSnackbar } from 'notistack';
+import { SnackbarProvider } from 'notistack';
 import { Card, CardBody, CardTitle, CardText, Row, Col } from 'reactstrap';
 
 const AddService = () => {
     const [nameService, setNameService] = useState('');
     const [price, setPrice] = useState(0);
     const [quantity, setQuantity] = useState(1);
-    const [reservations, setReservations] = useState([]);
-    const [services, setServices] = useState([]);
     const [selectedReservation, setSelectedReservation] = useState(null);
     const [selectedService, setSelectedService] = useState('');
-    const [error, setError] = useState('');
-    const [loadingReservations, setLoadingReservations] = useState(true);
-    const [loadingServices, setLoadingServices] = useState(true);
-
-    const { enqueueSnackbar } = useSnackbar();
-
-    useEffect(() => {
-        const fetchReservations = async () => {
-            try {
-                const response = await authAPI().get(endpoints['list_reservations']);
-                setReservations(response.data);
-            } catch (err) {
-                setError('Failed to fetch reservations');
-            } finally {
-                setLoadingReservations(false);
-            }
-        };
-
-        fetchReservations();
-    }, []);
-
-    useEffect(() => {
-        const fetchServices = async () => {
-            try {
-                const response = await authAPI().get(endpoints['services']);
-                // console.log(response.data)
-                setServices(response.data);
-            } catch (err) {
-                setError('Failed to fetch services');
-            } finally {
-                setLoadingServices(false);
-            }
-        };
-
-        fetchServices();
-    }, []);
 
     const handleServiceChange = (e) => {
-        const selectedServiceId = e.target.value;
-        const selectedService = services.find(service => service.id === parseInt(selectedServiceId));
-        setSelectedService(selectedServiceId);
-        setNameService(selectedService.nameService);
-        setPrice(selectedService.price);
+        setSelectedService(e.target.value);
+        // Set nameService and price with static values for display
+        setNameService('Dịch vụ 1');
+        setPrice(100000);
     };    
 
     const handleQuantityChange = (e) => {
-        const newQuantity = e.target.value;
-        setQuantity(newQuantity);
+        setQuantity(e.target.value);
     };
 
-    const handleSubmit = async (e) => {
+    const handleSubmit = (e) => {
         e.preventDefault();
-        const serviceData = {
-            reservationId: selectedReservation,
-            service: selectedService,
-            quantity,
-        };
-
-        try {
-            const response = await authAPI().post(endpoints['reservation_service'], serviceData);
-
-            if (response.status === 201) {
-                enqueueSnackbar('Dịch vụ đã được thêm thành công', { variant: 'success' });
-                setNameService('');
-                setPrice(0);
-                setQuantity(1);
-                setSelectedReservation(null);
-                setSelectedService('');
-            } else {
-                enqueueSnackbar('Có lỗi xảy ra, vui lòng thử lại', { variant: 'error' });
-            }
-        } catch (error) {
-            console.error('Error adding service:', error);
-            enqueueSnackbar('Có lỗi xảy ra, vui lòng thử lại', { variant: 'error' });
-        }
+        // Simulate a successful submission
+        alert('Dịch vụ đã được thêm thành công');
+        setNameService('');
+        setPrice(0);
+        setQuantity(1);
+        setSelectedReservation(null);
+        setSelectedService('');
     };
 
     const formatCurrency = (amount) => {
@@ -105,23 +48,15 @@ const AddService = () => {
                 <form onSubmit={handleSubmit}>
                     <div className="form-group">
                         <label>Tên dịch vụ</label>
-                        {loadingServices ? (
-                            <p>Loading services...</p>
-                        ) : (
-                            <select
-                                value={selectedService}
-                                onChange={handleServiceChange}
-                                required
-                            >
-                                <option value="">Chọn dịch vụ</option>
-                                {services.map((service) => (
-                                    <option key={service.id} value={service.id}>
-                                        {service.nameService} - Giá: {formatCurrency(service.price)}
-                                    </option>
-                                ))}
-                            </select>
-                        )}
-                        {error && <p>{error}</p>}
+                        <select
+                            value={selectedService}
+                            onChange={handleServiceChange}
+                            required
+                        >
+                            <option value="">Chọn dịch vụ</option>
+                            <option value="1">Dịch vụ 1 - Giá: {formatCurrency(100000)}</option>
+                            <option value="2">Dịch vụ 2 - Giá: {formatCurrency(200000)}</option>
+                        </select>
                     </div>
                     <div className="form-group">
                         <label>Số lượng</label>
@@ -145,23 +80,15 @@ const AddService = () => {
 
                     <div className="form-group">
                         <label>Chọn phiếu đặt phòng</label>
-                        {loadingReservations ? (
-                            <p>Loading reservations...</p>
-                        ) : (
-                            <select
-                                value={selectedReservation}
-                                onChange={(e) => setSelectedReservation(e.target.value)}
-                                required
-                            >
-                                <option value="">Chọn phiếu</option>
-                                {reservations.map((reservation) => (
-                                    <option key={reservation.id} value={reservation.id}>
-                                        {reservation.guest} - {reservation.room.map(r => r.nameRoom).join(', ')}
-                                    </option>
-                                ))}
-                            </select>
-                        )}
-                        {error && <p>{error}</p>}
+                        <select
+                            value={selectedReservation}
+                            onChange={(e) => setSelectedReservation(e.target.value)}
+                            required
+                        >
+                            <option value="">Chọn phiếu</option>
+                            <option value="1">Khách 1 - Phòng A101</option>
+                            <option value="2">Khách 2 - Phòng B202</option>
+                        </select>
                     </div>
                     <button type="submit">Thêm dịch vụ</button>
                 </form>
@@ -206,55 +133,25 @@ const styles = css`
 `;
 
 const ServiceList = () => {
-    const [services, setServices] = useState([]);
-    const { enqueueSnackbar } = useSnackbar(); // Add useSnackbar here for notification
-
-    useEffect(() => {
-        const fetchServices = async () => {
-            try {
-                const response = await authAPI().get(endpoints['reservation_service']);
-                console.log('Thông tin phiếu_dịch vụ:', response.data)
-                setServices(response.data);
-            } catch (error) {
-                console.error('Error fetching services:', error);
-            }
-        };
-
-        fetchServices();
-    }, []);
-    
-    const handleDelete = async (serviceId) => {
-        console.log('Attempting to delete service with ID:', serviceId); // Log ID dịch vụ
-        if (!serviceId) {
-            enqueueSnackbar('Service ID is undefined', { variant: 'error' });
-            return;
+    // Dummy data for display
+    const services = [
+        {
+            id: 1,
+            nameService: 'Dịch vụ 1',
+            price: 100000,
+            quantity: 2,
+            guest_name: 'Khách 1',
+            room_names: 'Phòng A101',
+        },
+        {
+            id: 2,
+            nameService: 'Dịch vụ 2',
+            price: 200000,
+            quantity: 1,
+            guest_name: 'Khách 2',
+            room_names: 'Phòng B202',
         }
-        try {
-            const response = await authAPI().patch(endpoints['deactive_service'](serviceId), { active: false });
-            console.log('Service deactivation response:', response); // Log phản hồi thành công
-            setServices(services.filter(service => service.id !== serviceId));
-            enqueueSnackbar('Dịch vụ đã được xóa thành công', { variant: 'success' });
-        } catch (error) {
-            console.error('Error deleting service:', error); // Log lỗi
-            if (error.response) {
-                console.error('Error response data:', error.response.data); // Log dữ liệu phản hồi lỗi
-                console.error('Error response status:', error.response.status); // Log trạng thái phản hồi lỗi
-                console.error('Error response headers:', error.response.headers); // Log tiêu đề phản hồi lỗi
-                if (error.response.status === 404) {
-                    enqueueSnackbar('Dịch vụ không tìm thấy, có thể đã bị xóa trước đó.', { variant: 'warning' });
-                } else {
-                    enqueueSnackbar('Có lỗi xảy ra khi xóa dịch vụ', { variant: 'error' });
-                }
-            } else if (error.request) {
-                console.error('Error request:', error.request); // Log yêu cầu lỗi
-                enqueueSnackbar('Không thể kết nối với máy chủ', { variant: 'error' });
-            } else {
-                console.error('Error message:', error.message); // Log thông điệp lỗi
-                enqueueSnackbar('Có lỗi xảy ra, vui lòng thử lại', { variant: 'error' });
-            }
-        }
-    };
-    
+    ];
     
     // Group services by guest and room
     const groupedServices = services.reduce((acc, service) => {
@@ -278,13 +175,6 @@ const ServiceList = () => {
                                 <Col key={index} sm="12" md="6" lg="4">
                                     <Card css={cardStyle}>
                                         <CardBody>
-                                            <button
-                                                className="delete-button"
-                                                css={deleteButtonStyle}
-                                                onClick={() => handleDelete(service.id)}
-                                            >
-                                                Xóa
-                                            </button>
                                             <CardTitle tag="h5" css={cardTitleStyle}>{service.nameService}</CardTitle>
                                             <CardText css={cardTextStyle}>
                                                 Giá: {service.price.toLocaleString()} VND<br />
@@ -331,32 +221,6 @@ const cardStyle = css`
     border: 1px solid #ddd;
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    transition: transform 0.3s ease;
-    &:hover {
-        transform: scale(1.05);
-        .delete-button {
-            opacity: 1;
-            visibility: visible;
-        }
-    }
-`;
-
-const deleteButtonStyle = css`
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    background-color: #dc3545;
-    color: #fff;
-    border: none;
-    padding: 5px 10px;
-    border-radius: 4px;
-    cursor: pointer;
-    opacity: 0;
-    visibility: hidden;
-    transition: opacity 0.3s ease, visibility 0.3s ease;
-    &:hover {
-        background-color: #c82333;
-    }
 `;
 
 const cardTitleStyle = css`
