@@ -119,10 +119,10 @@ class AccountViewSet(viewsets.ViewSet, generics.CreateAPIView,
 
         return Response(data={'is_valid': "False"}, status=status.HTTP_200_OK)
 
+
 class RoomTypeViewSet(viewsets.ViewSet, generics.ListCreateAPIView):
     queryset = RoomType.objects.all()
     serializer_class = RoomTypeSerializer
-
 
     def get_permissions(self):
         if self.action in ['list', 'create', 'update', 'partial_update', 'destroy', 'retrieve']:
@@ -135,7 +135,6 @@ class RoomTypeViewSet(viewsets.ViewSet, generics.ListCreateAPIView):
             queryset = queryset.filter(nameRoomType__icontains=q)
 
         return queryset
-
 
     def partial_update(self, request, pk=None):
         try:
@@ -234,5 +233,158 @@ class RoomViewSet(viewsets.ViewSet, generics.RetrieveAPIView):
             return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
+class ReservationViewSet(viewsets.ViewSet,
+                         generics.ListCreateAPIView,
+                         generics.ListAPIView,
+                         generics.UpdateAPIView
+                         ):
+    queryset = Reservation.objects.all()
+    serializer_class = ReservationSerializer
+
+    # Chat gpt
+    def get_permissions(self):
+        if self.action in ['list']:  # Allow 'list' and 'create' for receptionists
+            if self.request.user.is_authenticated and self.request.user.role == Account.Roles.LeTan:
+                return [permissions.IsAuthenticated()]
+            else:
+                raise PermissionDenied("Only receptionists can access this endpoint.")
+        elif self.action in ['partial_update', 'update']:
+            if self.request.user.is_authenticated and self.request.user.role in [Account.Roles.KhachHang,
+                                                                                 Account.Roles.LeTan]:
+                return [permissions.IsAuthenticated()]
+            else:
+                raise PermissionDenied("Only the customer or receptionists can partially update this reservation.")
+        elif self.action == 'get_reservation_guest':
+            return [permissions.IsAuthenticated(), perm.IsKhachHang()]
+        elif self.action == 'cancel_reservation':
+            if self.request.user.is_authenticated and self.request.user.role in [Account.Roles.LeTan]:
+                return [permissions.IsAuthenticated()]
+            else:
+                raise PermissionDenied("Only receptionists can cancel reservations.")
+        return [permissions.IsAuthenticated()]
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset().filter(active=True)
+        serializer = ReservationSerializer(queryset, many=True)
+        return Response(serializer.data)
+
+    def get_queryset(self):
+        return self.queryset
+
+    def create(self, request, *args, **kwargs):
+        guest_name = request.data.get('guest')
+        guest = Account.objects.get(username=guest_name)
+        room_type_name = request.data.get('room')
+        room_data = room_type_name[0]
+        roomType = RoomType.objects.get(nameRoomType=room_data.get('roomType'))
+
+        if not guest_name or not room_type_name:
+            return Response({'detail': 'Customer ID and Room Type ID are required.'},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        rooms = Room.objects.filter(roomType=roomType, status=0)
+
+        if not rooms.exists():
+            return Response({'detail': 'No available rooms for the selected room type.'},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        room = rooms.first()  # Chọn phòng đầu tiên có sẵn
+
+        reservation = Reservation.objects.create(
+            guest=guest,
+            bookDate=request.data.get('bookDate'),  # Cung cấp giá trị cho bookDate
+            checkin=request.data.get('checkin'),
+            checkout=request.data.get('checkout'),
+            active=True  # hoặc các giá trị khác từ request.data
+        )
+        reservation.room.add(room)
+        reservation.save()
+
+        room.status = 1  # Cập nhật trạng thái phòng không còn sẵn sàng
+        room.save()
+
+        return Response(ReservationSerializer(reservation).data, status=status.HTTP_201_CREATED)
+
+    # chat
+    def partial_update(self, request, *args, **kwargs):
+        pk = kwargs.get('pk')
+        try:
+            reservation = self.queryset.get(pk=pk)
+        except Reservation.DoesNotExist:
+            return Response({'detail': 'Reservation not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        if request.user.role not in [Account.Roles.KhachHang, Account.Roles.LeTan]:
+            return Response({'detail': 'Permission denied.'}, status=status.HTTP_403_FORBIDDEN)
+
+        serializer = self.get_serializer(reservation, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_200_OK, headers=headers)
+
+    def perform_update(self, serializer):
+        serializer.save()
+
+    @action(detail=True, methods=['patch'], url_path='deactivate')
+    def deactivate_reservation(self, request, pk=None):
+        try:
+            reservation = self.get_object()
+            if request.user.is_authenticated and request.user.role in [Account.Roles.LeTan]:
+                reservation.active = False
+                reservation.save()
+                return Response({'status': 'reservation deactivated'}, status=status.HTTP_200_OK)
+            else:
+                raise PermissionDenied("Only receptionists can deactivate reservations.")
+        except Reservation.DoesNotExist:
+            return Response({'error': 'Reservation not found'}, status=status.HTTP_404_NOT_FOUND)
+
+    @action(detail=False, methods=['get'], url_path='customer-reservations')
+    def get_customer_reservations(self, request):
+        if request.user.is_authenticated and request.user.role == Account.Roles.KhachHang:
+            reservations = self.queryset.filter(guest=request.user)
+            serializer = self.get_serializer(reservations, many=True)
+            return Response(serializer.data)
+        else:
+            raise PermissionDenied("Chỉ khách hàng mới có quyền truy cập endpoint này.")
+
+
+class BillViewSet(viewsets.ViewSet,
+                  generics.ListCreateAPIView):
+    queryset = Bill.objects.all()
+    serializer_class = BillSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_permissions(self):
+        if self.action in ['list', 'create']:  # Allow 'list' and 'create' for receptionists
+            if self.request.user.is_authenticated and self.request.user.role == Account.Roles.LeTan:
+                return [permissions.IsAuthenticated()]
+            else:
+                raise PermissionDenied("Only receptionists can access this endpoint.")
+        # Add other actions and permission checks here if needed
+        return [permissions.AllowAny()]
+
+    def list(self, request):
+        queryset = self.get_queryset()
+        serializer = BillSerializer(queryset, many=True)
+        return Response(serializer.data)
+
+    def create(self, request, *args, **kwargs):
+        data = request.data
+        total_amount = data.get('totalAmount')
+        reservation_id = data.get('reservation')
+
+        try:
+            reservation = Reservation.objects.get(id=reservation_id)
+        except Reservation.DoesNotExist:
+            return Response({"error": "Reservation not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        bill = Bill.objects.create(
+            totalAmount=total_amount,
+            reservation=reservation
+        )
+
+        serializer = BillSerializer(bill)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 # Create your views here.
