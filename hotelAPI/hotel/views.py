@@ -17,6 +17,7 @@ from .serializers import (
     ServiceSerializer,
     RefundSerializer,
     BillSerializer, ReservationServiceSerializer,
+
 )
 
 
@@ -347,6 +348,192 @@ class ReservationViewSet(viewsets.ViewSet,
             return Response(serializer.data)
         else:
             raise PermissionDenied("Chỉ khách hàng mới có quyền truy cập endpoint này.")
+
+
+class ServiceViewSet(viewsets.ViewSet,
+                    generics.ListCreateAPIView):
+   queryset = Service.objects.all()
+   serializer_class = ServiceSerializer
+   permission_classes = [IsAuthenticated]
+
+
+   def get_permissions(self):
+       if self.action == 'list':
+           if not (self.request.user.is_authenticated and
+                   self.request.user.role == Account.Roles.LeTan):
+               raise PermissionDenied("Only Receptionists can perform this action.")
+           return [permissions.IsAuthenticated()]
+
+
+
+
+# class ServiceDetailView(generics.RetrieveUpdateDestroyAPIView):
+#     queryset = Service.objects.all()
+#     serializer_class = ServiceSerializer
+#     permission_classes = [IsAuthenticated]
+
+
+
+
+class ReservationServiceViewSet(viewsets.ViewSet,
+                               generics.ListCreateAPIView,
+                               generics.UpdateAPIView):
+   queryset = ReservationService.objects.all()
+   serializer_class = ReservationServiceSerializer
+   permission_classes = [IsAuthenticated]
+
+
+   def get_permissions(self):
+       if self.action in ['create', 'list', 'update_active']:
+           # Chỉ cho phép người dùng có vai trò 'Lễ tân' sử dụng phương thức 'create'
+           if not (self.request.user.is_authenticated and
+                   self.request.user.role == Account.Roles.LeTan):
+               raise PermissionDenied("Only Receptionists can perform this action.")
+           return [permissions.IsAuthenticated()]
+       elif self.action in ['update', 'destroy']:
+           # Cũng có thể đặt quyền cho các hành động khác nếu cần
+           if not (self.request.user.is_authenticated and
+                   self.request.user.role == Account.Roles.Admin):
+               raise PermissionDenied("Only Admins can perform this action.")
+           return [permissions.IsAuthenticated()]
+       return [permissions.AllowAny()]
+
+
+   def create(self, request, *args, **kwargs):
+       reservation_id = request.data.get('reservationId')
+       service_id = request.data.get('service')
+       quantity = int(request.data.get('quantity', 1))
+
+
+       try:
+           reservation = Reservation.objects.get(id=reservation_id)
+           service = Service.objects.get(id=service_id)
+       except (Reservation.DoesNotExist, Service.DoesNotExist):
+           return Response({"detail": "Reservation or Service not found."}, status=status.HTTP_404_NOT_FOUND)
+
+
+       if not reservation.active:
+           return Response({"detail": "Reservation is not active."}, status=status.HTTP_400_BAD_REQUEST)
+
+
+       total_price = service.price * quantity
+
+
+       reservation_service = ReservationService.objects.create(
+           reservation=reservation,
+           service=service,
+           quantity=quantity,
+           total_price=total_price
+       )
+
+
+       serializer = self.get_serializer(reservation_service)
+       return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+   def list(self, request, *args, **kwargs):
+       # Lọc các reservation đang active
+       active_reservations = Reservation.objects.filter(active=True)
+       active_services = Service.objects.filter(active=True)
+       # Lọc reservation services thuộc các reservation đang active
+       queryset = ReservationService.objects.filter(
+           active=True,
+           reservation__in=active_reservations,
+           service__in=active_services
+       )
+
+
+       # Serialize dữ liệu
+       serializer = self.get_serializer(queryset, many=True)
+
+
+       # Trả về phản hồi với dữ liệu đã được serialize
+       return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+   def partial_update(self, request, *args, **kwargs):
+       try:
+           # Lấy đối tượng ReservationService theo id
+           instance = self.get_object()
+       except ReservationService.DoesNotExist:
+           return Response({'detail': 'Not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+
+       # Cập nhật trường active
+       active = request.data.get('active', None)
+
+
+       if active is not None:
+           instance.active = active
+           instance.save()
+           serializer = self.get_serializer(instance)
+           return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+       return Response({'detail': 'Field "active" is required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+
+class ReservationServiceListView(
+                                generics.ListAPIView,
+):
+   serializer_class = ReservationServiceSerializer
+   permission_classes = [IsAuthenticated]
+
+
+   def get_queryset(self):
+       reservation_id = self.kwargs['reservation_id']
+       return ReservationService.objects.filter(reservation_id=reservation_id)
+
+
+
+
+class BillViewSet(viewsets.ViewSet,
+                 generics.ListCreateAPIView):
+   queryset = Bill.objects.all()
+   serializer_class = BillSerializer
+   permission_classes = [IsAuthenticated]
+
+
+   def get_permissions(self):
+       if self.action in ['list', 'create']:  # Allow 'list' and 'create' for receptionists
+           if self.request.user.is_authenticated and self.request.user.role == Account.Roles.LeTan:
+               return [permissions.IsAuthenticated()]
+           else:
+               raise PermissionDenied("Only receptionists can access this endpoint.")
+
+
+       # Add other actions and permission checks here if needed
+       return [permissions.AllowAny()]
+
+
+   def list(self, request):
+       queryset = self.get_queryset()
+       serializer = BillSerializer(queryset, many=True)
+       return Response(serializer.data)
+
+
+   def create(self, request, *args, **kwargs):
+       data = request.data
+       total_amount = data.get('totalAmount')
+       reservation_id = data.get('reservation')
+
+
+       try:
+           reservation = Reservation.objects.get(id=reservation_id)
+       except Reservation.DoesNotExist:
+           return Response({"error": "Reservation not found"}, status=status.HTTP_404_NOT_FOUND)
+
+
+       bill = Bill.objects.create(
+           totalAmount=total_amount,
+           reservation=reservation
+       )
+
+
+       serializer = BillSerializer(bill)
+       return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
 class BillViewSet(viewsets.ViewSet,
