@@ -18,6 +18,12 @@ import AddEmployee from "./components/employee/AddEmployee"
 import Login from "./components/Account/Login";
 import Signup from "./components/Account/Signup";
 import Info from './components/Navbar/Info';
+import ManageBookings from './components/Staff/ManageBookings';
+import ManageInvoices from './components/Staff/ManageInvoices';
+import ServiceList from './components/Staff/ServiceList';
+import InvoiceList from './components/Staff/InvoiceList';
+import AddService from './components/Staff/AddService';
+import CustomerReservations from './components/Customer/CustomerReservations';
 
 const App = () => {
   const [user, setUser] = useState(null);
@@ -45,6 +51,12 @@ const App = () => {
               <Route path="/add-room" element={<AddRoom />} />
               <Route path="/add-roomtype" element={<AddRoomType />} />
               <Route path="/add-employee" element={<AddEmployee />} />              
+              <Route path='/manage-bookings' element={<ManageBookings />} />
+              <Route path="/service-list" element={<ServiceList />} />
+              <Route path="/add-service" element={<AddService />} />
+              <Route path="/manage-invoice" element={<ManageInvoices />} />
+              <Route path="/list-invoice" element={<InvoiceList />} />
+              <Route path="/customer-reservations" element={<CustomerReservations />} /> 
             </Routes>
       </BrowserRouter>
     </SnackbarProvider>
