@@ -1,38 +1,79 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Form, Button, Container, Row } from 'react-bootstrap';
+import APIs, { endpoints, authAPI } from "../../configs/APIs";
+import cookie from "react-cookies";
+import { MyDispatchContext} from '../../configs/MyContext';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
 const Login = () => {
     const [username, setUsername] = useState(''); // Khởi tạo biến state cho username
     const [password, setPassword] = useState(''); // Khởi tạo biến state cho password
+    const dispatch = useContext(MyDispatchContext);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const nav = useNavigate();
 
-    const handleLoginError = () => {
-        setError("Sai tên đăng nhập hoặc mật khẩu");
-    };
-
-    const login = () => {
-        setLoading(true);
-        console.log("Tên đăng nhập:", username);
-        console.log("Mật khẩu:", password);
-
-        // Mô phỏng đăng nhập với dữ liệu ảo
-        if (username === 'admin' && password === '123456') {
-            console.log("Đăng nhập thành công!");
-            setLoading(false);
-            nav("/");
-        } else {
-            handleLoginError();
-            setLoading(false);
+    const handleLoginError = (errorStatus) => {
+        switch (errorStatus) {
+            case 400:
+                setError("Sai tên đăng nhập hoặc mật khẩu");
+                break;
+            // Xử lý các trường hợp lỗi khác nếu cần
+            default:
+                setError("Đăng nhập không thành công");
+                break;
         }
     };
 
+    const login = async () => {
+        console.log(username); // Log username ra console để kiểm tra
+        console.log(password); // Log password ra console để kiểm tra
+        setError("Sai tên đăng nhập hoặc mật khẩu");
+        setLoading(true);
+
+        try {
+            let res = await APIs.post(endpoints['login'], {
+                'username': username,
+                'password': password,
+                'client_id': "JFu9WogXLDxSqKIsCRVCaJ1Fm3F0QpusLG8c1qAF",
+                'client_secret': "agQt2eVMf8UKIk6anZjPZXkLVzDYaeY9FWtcvLJm0lqxByJi0YUuGtb6quJSCixOOeEIX7j0bD3v4He9KJnnjtNG28vgQsW6fkJvQlVr2KovdztvRSy5JIGdc7cDii3L",
+                'grant_type': "password",
+            }, {
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                }
+            });
+
+            console.log(res.status)
+            if (res.status === 200) {
+                cookie.save("token", res.data.access_token);
+                console.log(cookie.load("token"))
+                nav("/")
+                console.log("Đăng nhập thành công!");
+                console.info(res.data);
+                let userdata = await authAPI().get(endpoints['current_user']);
+                cookie.save('user', userdata.data);
+                console.info(userdata.data)
+                dispatch({
+                    "type": "login",
+                    "payload": userdata.data
+                });
+            }
+            else {
+                handleLoginError(res.status); // Gọi hàm handleLoginError khi có lỗi
+                console.error("Đăng nhập không thành công:", res);
+            }
+        } catch (ex) {
+            console.error("Lỗi tại màn hình đăng nhập:", ex);
+            setError("Sai tên hoặc mật khẩu, vui lòng thử lại.");
+            setLoading(false);
+        }
+    };
     const register = () => {
         nav("/signup");
     };
+
 
     return (
         <Container
@@ -78,10 +119,8 @@ const Login = () => {
                         </Form.Group>
 
                         <Button variant="primary" type="button" className="w-100" onClick={login}>
-                            {loading ? 'Đang đăng nhập...' : 'Đăng nhập'}
+                            Đăng nhập
                         </Button>
-
-                        {error && <p className="text-danger mt-3 text-center">{error}</p>}
 
                         <div className="text-center mt-3">
                             <a href="#" onClick={register} style={{ color: '#6c757d', textDecoration: 'underline', cursor: 'pointer' }}>

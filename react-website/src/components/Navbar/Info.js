@@ -1,52 +1,89 @@
 /** @jsx jsx */
 import { jsx, css } from "@emotion/react";
-import { useState } from "react";
-import { FaCamera } from 'react-icons/fa';
+import { useContext, useState, useEffect } from "react";
+import { MyUserContext, MyDispatchContext } from "../../configs/MyContext";
 import Button from 'react-bootstrap/Button';
 import Form from 'react-bootstrap/Form';
-import Alert from 'react-bootstrap/Alert';
+import Alert from 'react-bootstrap/Alert'; // Import Alert component from react-bootstrap
+import { FaCamera } from 'react-icons/fa'; // Import camera icon from react-icons
+import cookie from "react-cookies";
+import { authAPI, endpoints } from "../../configs/APIs";
 
 const Info = () => {
-    const fakeUser = {
-        name: 'Nguyen Van A',
-        username: 'nguyenvana',
-        address: '123 Đường ABC, Thành phố XYZ',
-        phone: '0123456789',
-        dob: '1990-01-01',
-        sex: 'male',
-        email: 'nguyenvana@example.com',
-        avatar: 'https://via.placeholder.com/150' // URL của hình ảnh avatar
-    };
+    const dispatch = useContext(MyDispatchContext);
+    const user = useContext(MyUserContext);
 
     const [editableUser, setEditableUser] = useState({
-        name: fakeUser.name,
-        address: fakeUser.address,
-        phone: fakeUser.phone,
-        dob: fakeUser.dob,
-        sex: fakeUser.sex,
+        name: user?.name || '',
+        address: user?.Address || '',
+        phone: user?.phone || '',
+        dob: user?.DOB || '',
+        sex: user?.sex === 1 ? 'male' : user?.sex === 2 ? 'female' : '', // Chuyển đổi giới tính từ API
     });
 
+    const [changedFields, setChangedFields] = useState(new Set());
     const [avatarFile, setAvatarFile] = useState(null); // State để quản lý tệp avatar đã chọn
     const [notification, setNotification] = useState({ type: '', message: '' }); // State cho thông báo
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setEditableUser(prev => ({
-            ...prev,
-            [name]: value
-        }));
+        setEditableUser(prev => {
+            setChangedFields(prevChanged => new Set(prevChanged).add(name));
+            return { ...prev, [name]: value };
+        });
     };
 
     const handleChooseAvatar = (e) => {
         const file = e.target.files[0];
         setAvatarFile(file);
+        setChangedFields(prevChanged => new Set(prevChanged).add('avatar'));
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        // Giả lập việc cập nhật thông tin người dùng
-        setNotification({ type: 'success', message: 'Cập nhật thông tin thành công' });
+        try {
+            const formData = new FormData();
+            changedFields.forEach(field => {
+                if (field === 'avatar' && avatarFile) {
+                    formData.append('avatar', avatarFile);
+                } else if (field === 'sex') {
+                    formData.append(field, editableUser.sex === 'male' ? 1 : editableUser.sex === 'female' ? 2 : ''); // Chuyển đổi giới tính trước khi gửi
+                } else if (field in editableUser) {
+                    formData.append(field, editableUser[field]);
+                }
+            });
+
+            const res = await authAPI().patch(endpoints['current-user'], formData, {
+                headers: {
+                    'Content-Type': 'application/form-data'
+                }
+            });
+
+            if (res.status === 200) {
+                console.log('Cập nhật thông tin người dùng thành công:');
+                setChangedFields(new Set()); // Xóa các trường đã thay đổi
+                let userdata = await authAPI().get(endpoints['current-user']);
+                cookie.save('user', userdata.data);
+
+                dispatch({
+                    type: "login",
+                    payload: userdata.data
+                });
+
+                setNotification({ type: 'success', message: 'Cập nhật thông tin thành công' }); // Thiết lập thông báo thành công
+            } else {
+                console.error('Cập nhật thông tin người dùng không thành công:');
+                setNotification({ type: 'error', message: 'Cập nhật không thành công' }); // Thiết lập thông báo lỗi
+            }
+        } catch (error) {
+            console.error('Lỗi cập nhật thông tin người dùng:', error);
+            setNotification({ type: 'error', message: 'Cập nhật không thành công' }); // Thiết lập thông báo lỗi
+        }
     };
+
+    if (!user) {
+        return <p>Vui lòng đăng nhập để xem thông tin của bạn.</p>;
+    }
 
     return (
         <div css={styles.container}>
@@ -59,8 +96,8 @@ const Info = () => {
             <div css={styles.avatarSection}>
                 <div css={styles.avatarContainer}>
                     <img
-                        src={avatarFile ? URL.createObjectURL(avatarFile) : fakeUser.avatar}
-                        alt={`${editableUser.name}'s avatar`}
+                        src={avatarFile ? URL.createObjectURL(avatarFile) : user.avatar || 'placeholder-image-url'}
+                        alt={`${user.name}'s avatar`}
                         css={styles.avatar}
                     />
                     <div css={styles.cameraOverlay}>
@@ -88,7 +125,7 @@ const Info = () => {
                     <Form.Label><strong>Tên đăng nhập:</strong></Form.Label>
                     <Form.Control
                         type="text"
-                        value={fakeUser.username}
+                        value={user.username}
                         readOnly
                     />
                 </Form.Group>
@@ -127,6 +164,7 @@ const Info = () => {
                         value={editableUser.sex}
                         onChange={handleChange}
                     >
+                        <option value="">Chọn giới tính</option>
                         <option value="male">Nam</option>
                         <option value="female">Nữ</option>
                         <option value="other">Khác</option>
@@ -136,7 +174,7 @@ const Info = () => {
                     <Form.Label><strong>Email:</strong></Form.Label>
                     <Form.Control
                         type="email"
-                        value={fakeUser.email}
+                        value={user.email}
                         readOnly
                     />
                 </Form.Group>
