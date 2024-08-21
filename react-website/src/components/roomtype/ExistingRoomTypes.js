@@ -1,49 +1,48 @@
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { deleteRoomType, getRoomTypes } from "../../configs/APIs";
 import { Col, Row } from "react-bootstrap";
+import RoomFilter from "../common/RoomFilter";
+import RoomPaginator from "../common/RoomPaginator";
 import { FaEdit, FaEye, FaPlus, FaTrashAlt } from "react-icons/fa";
-
-const mockRoomTypes = [
-  { id: "1", nameRoomType: "Standard Room", price: "100", quantity: "10", image: "https://via.placeholder.com/100" },
-  { id: "2", nameRoomType: "Deluxe Room", price: "150", quantity: "8", image: "https://via.placeholder.com/100" },
-];
-
-const mockDeleteRoomType = (roomTypeId) => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      console.log("Deleted Room Type:", roomTypeId);
-      resolve({ status: 0 }); 
-    }, 1000);
-  });
-};
+import { Link } from "react-router-dom";
 
 const ExistingRoomTypes = () => {
   const [roomTypes, setRoomTypes] = useState([]);
+  const [rooms, setRooms] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [roomTypesPerPage] = useState(8);
   const [isLoading, setIsLoading] = useState(false);
-  const [filteredRooms, setFilteredRooms] = useState([]);
+  const [filteredRooms, setFilteredRooms] = useState([
+    // { id: "", roomType: "", status: ""},
+  ]);
   const [selectedRoomType, setSelectedRoomType] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
 
   useEffect(() => {
-    setIsLoading(true);
-    setTimeout(() => {
-      setRoomTypes(mockRoomTypes);
-      setFilteredRooms(mockRoomTypes);
-      setIsLoading(false);
-    }, 1000);
+    fetchRoomTypes();
   }, []);
+
+  const fetchRoomTypes = async () => {
+    setIsLoading(true);
+    try {
+      const result = await getRoomTypes();
+      setRoomTypes(result);
+      setIsLoading(false);
+    } catch (error) {
+      setErrorMessage(error.message);
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (selectedRoomType === "") {
       setFilteredRooms(roomTypes);
     } else {
-      const filtered = roomTypes.filter(
-        (roomType) => roomType.nameRoomType === selectedRoomType
+      const filteredRooms = rooms.filter(
+        (roomTypes) => roomTypes.nameRoomType === selectedRoomType
       );
-      setFilteredRooms(filtered);
+      setFilteredRooms(filteredRooms);
     }
     setCurrentPage(1);
   }, [roomTypes, selectedRoomType]);
@@ -54,13 +53,13 @@ const ExistingRoomTypes = () => {
 
   const handleDelete = async (roomTypeId) => {
     try {
-      const result = await mockDeleteRoomType(roomTypeId);
-      if (result.status === 0) {
-        setSuccessMessage(`Room Type No ${roomTypeId} was deleted`);
-        setRoomTypes(roomTypes.filter(roomType => roomType.id !== roomTypeId));
-        setFilteredRooms(filteredRooms.filter(roomType => roomType.id !== roomTypeId));
+      const result = await deleteRoomType(roomTypeId);
+      console.log(result.status)
+      if (result === "") {
+        setSuccessMessage(`RoomType No ${roomTypeId} was delete`);
+        fetchRoomTypes();
       } else {
-        setErrorMessage("Error deleting room type");
+        console.error(`Error deleting room : ${result.message}`);
       }
     } catch (error) {
       setErrorMessage(error.message);
@@ -71,8 +70,9 @@ const ExistingRoomTypes = () => {
     }, 3000);
   };
 
-  const calculateTotalPages = () => {
-    const totalRoomTypes = filteredRooms.length;
+  const calculateTotalPages = (filteredRoomTypes, roomTypesPerPage, roomTypes) => {
+    const totalRoomTypes =
+      filteredRoomTypes.length > 0 ? filteredRoomTypes.length : roomTypes.length;
     return Math.ceil(totalRoomTypes / roomTypesPerPage);
   };
 
@@ -86,18 +86,26 @@ const ExistingRoomTypes = () => {
         {successMessage && (
           <p className="alert alert-success mt-5">{successMessage}</p>
         )}
+
         {errorMessage && (
           <p className="alert alert-danger mt-5">{errorMessage}</p>
         )}
       </div>
 
       {isLoading ? (
-        <p>Loading existing room types...</p>
+        <p>Loading existing roomTypes</p>
       ) : (
         <>
           <section className="mt-5 mb-5 container">
             <div className="d-flex justify-content-between mb-3 mt-5">
-              <h2>Existing Room Types</h2>
+              <h2>Existing RoomTypes</h2>
+            </div>
+
+            <Row>
+              {/* <Col md={6} className="mb-2 md-mb-0">
+                <RoomFilter data={rooms} setFilteredData={setFilteredRooms} />
+              </Col> */}
+
               <Col
                 md={6}
                 className="d-flex justify-content-md-end justify-content-center mb-3"
@@ -116,20 +124,19 @@ const ExistingRoomTypes = () => {
                     borderRadius: "0.25rem",
                   }}
                 >
-                  <FaPlus style={{ marginRight: "0.5rem" }} /> Add Room Type
+                  <FaPlus style={{ marginRight: "0.5rem" }} /> Add RoomType
                 </Link>
               </Col>
-            </div>
+            </Row>
 
             <table className="table table-bordered table-hover">
               <thead>
                 <tr className="text-center">
                   <th>ID</th>
-                  <th>Name Room Type</th>
-                  <th>Price</th>
-                  <th>Quantity</th>
+                  <th>Name RoomType</th>
+                  <th> Price</th>
+                  <th> Quantity</th>
                   <th>Image</th>
-                  <th>Actions</th>
                 </tr>
               </thead>
 
@@ -140,13 +147,7 @@ const ExistingRoomTypes = () => {
                     <td>{roomType.nameRoomType}</td>
                     <td>{roomType.price}</td>
                     <td>{roomType.quantity}</td>
-                    <td>
-                      <img
-                        src={roomType.image}
-                        alt={roomType.nameRoomType}
-                        style={{ maxWidth: "100px", maxHeight: "100px" }}
-                      />
-                    </td>
+                    <td>{roomType.image}</td>
                     <td className="gap-2">
                       <Link to={`/edit-roomtype/${roomType.id}`} className="gap-2">
                         <span className="btn btn-info btn-sm">
@@ -155,7 +156,7 @@ const ExistingRoomTypes = () => {
                         <span className="btn btn-warning btn-sm ml-5">
                           <FaEdit />
                         </span>
-                      </Link>
+                      </Link >
                       <button
                         className="btn btn-danger btn-sm ml-5"
                         onClick={() => handleDelete(roomType.id)}
@@ -167,23 +168,15 @@ const ExistingRoomTypes = () => {
                 ))}
               </tbody>
             </table>
-            <nav aria-label="Page navigation">
-              <ul className="pagination justify-content-center">
-                {[...Array(calculateTotalPages()).keys()].map((pageNumber) => (
-                  <li
-                    key={pageNumber + 1}
-                    className={`page-item ${currentPage === pageNumber + 1 ? "active" : ""}`}
-                  >
-                    <button
-                      className="page-link"
-                      onClick={() => handlePaginationClick(pageNumber + 1)}
-                    >
-                      {pageNumber + 1}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </nav>
+            {/* <RoomPaginator
+              currentPage={currentPage}
+              totalPages={calculateTotalPages(
+                filteredRoomTypes,
+                roomTypesPerPage,
+                roomTypes
+              )}
+              onPageChange={handlePaginationClick}
+            /> */}
           </section>
         </>
       )}

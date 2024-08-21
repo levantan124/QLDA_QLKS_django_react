@@ -1,22 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { addRoomType, getRoomTypes, uploadToCloudinary } from "../../configs/APIs"
 
-const mockUploadToCloudinary = (image) => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve("https://via.placeholder.com/150"); // Mock URL for uploaded image
-    }, 1000);
-  });
-};
-
-const mockAddRoomType = (nameRoomType, price, quantity, photoUrl) => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      console.log("Added room type:", { nameRoomType, price, quantity, photoUrl });
-      resolve(true); // Simulate success
-    }, 1000);
-  });
-};
 
 const AddRoomType = () => {
   const [newRoomType, setNewRoomType] = useState({
@@ -41,11 +26,27 @@ const AddRoomType = () => {
     setImagePreview(URL.createObjectURL(selectedImage));
   };
 
+  useEffect(() => {
+    // Fetch room types from the API
+    const fetchRoomTypes = async () => {
+      try {
+        const response = await getRoomTypes()
+        // setRoomTypes(response.data);
+      } catch (error) {
+        console.error("Error fetching room types:", error);
+        setErrorMessage("Error fetching room types.");
+      }
+    };
+
+    fetchRoomTypes();
+  }, []);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const photoUrl = await mockUploadToCloudinary(newRoomType.image);
-      const success = await mockAddRoomType(newRoomType.nameRoomType, newRoomType.price, newRoomType.quantity, photoUrl);
+      const photoUrl = await uploadToCloudinary(newRoomType.image);
+			const success = await addRoomType(newRoomType.nameRoomType, newRoomType.price, newRoomType.quantity, photoUrl);
+			console.log('API response:', newRoomType)
       if (success) {
         setSuccessMessage("A new room type was added successfully!");
         setNewRoomType({ nameRoomType: "", price: "", quantity: "", image: "" });

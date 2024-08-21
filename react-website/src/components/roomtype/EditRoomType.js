@@ -1,21 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link, useParams } from "react-router-dom";
-
-const mockRoomTypeData = {
-  nameRoomType: "Deluxe Suite",
-  price: "150",
-  quantity: "5",
-  image: "https://via.placeholder.com/150" // Mock image URL
-};
-
-const mockUpdateRoomType = (roomTypeId, updatedRoomType) => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      console.log("Updated Room Type:", roomTypeId, updatedRoomType);
-      resolve({ status: 0 }); // Simulate success
-    }, 1000);
-  });
-};
+import { getRoomTypeById, updateRoomType } from "../../configs/APIs"
 
 const EditRoom = () => {
   const [roomType, setRoomType] = useState({
@@ -31,9 +16,15 @@ const EditRoom = () => {
 
   useEffect(() => {
     // Simulate fetching room type data
-    const fetchRoomType = () => {
-      setRoomType(mockRoomTypeData);
-      setImagePreview(mockRoomTypeData.image);
+    const fetchRoomType = async () => {
+      try {
+				const roomTypeData = await getRoomTypeById(roomTypeId)
+				setRoomType(roomTypeData)
+				setImagePreview(roomTypeData.photo)
+				return(roomTypeData.data)
+			} catch (error) {
+				console.error(error)
+			}
     };
     fetchRoomType();
   }, [roomTypeId]);
@@ -52,9 +43,12 @@ const EditRoom = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await mockUpdateRoomType(roomTypeId, roomType);
+			const response = await updateRoomType(roomTypeId, roomType)
       if (response.status === 0) {
         setSuccessMessage("Room type updated successfully!");
+        const updatedRoomTypeData = await getRoomTypeById(roomTypeId)
+				setRoomType(updatedRoomTypeData)
+				setImagePreview(updatedRoomTypeData.image)
         setErrorMessage("");
       } else {
         setErrorMessage("Error updating room type");

@@ -4,12 +4,8 @@ import RoomFilter from "../common/RoomFilter";
 import RoomPaginator from "../common/RoomPaginator";
 import { FaEdit, FaEye, FaPlus, FaTrashAlt } from "react-icons/fa";
 import { Link } from "react-router-dom";
+import { deleteRoom, getAllRooms,getRoomTypes } from "../../configs/APIs";
 
-const mockRooms = [
-  { id: 1, nameRoom: "Room A", roomType: { id: "1", nameRoomType: "Single" }, status: "0" },
-  { id: 2, nameRoom: "Room B", roomType: { id: "2", nameRoomType: "Double" }, status: "1" },
-  { id: 3, nameRoom: "Room C", roomType: { id: "1", nameRoomType: "Single" }, status: "0" },
-];
 
 const ExistingRooms = () => {
   const [rooms, setRooms] = useState([]);
@@ -22,20 +18,28 @@ const ExistingRooms = () => {
   const [successMessage, setSuccessMessage] = useState("");
 
   useEffect(() => {
-    setIsLoading(true);
-    setTimeout(() => {
-      setRooms(mockRooms);
-      setFilteredRooms(mockRooms);
-      setIsLoading(false);
-    }, 1000); 
+    fetchRooms();
+
   }, []);
+
+  const fetchRooms = async () => {
+    setIsLoading(true);
+    try {
+      const result = await getAllRooms();
+      setRooms(result);
+      setIsLoading(false);
+    } catch (error) {
+      setErrorMessage(error.message);
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (selectedRoomType === "") {
       setFilteredRooms(rooms);
     } else {
       const filteredRooms = rooms.filter(
-        (room) => room.roomType?.id === selectedRoomType
+        (room) => room.roomType?.nameRoomType === selectedRoomType
       );
       setFilteredRooms(filteredRooms);
     }
@@ -46,10 +50,22 @@ const ExistingRooms = () => {
     setCurrentPage(pageNumber);
   };
 
-  const handleDelete = (roomId) => {
-    setRooms(rooms.filter(room => room.id !== roomId));
-    setSuccessMessage(`Room No ${roomId} was deleted`);
-    setTimeout(() => setSuccessMessage(""), 3000);
+  const handleDelete = async (roomId) => {
+    try {
+      const result = await deleteRoom(roomId);
+      if (result === "") {
+        setSuccessMessage(`Room No ${roomId} was delete`);
+        fetchRooms();
+      } else {
+        console.error(`Error deleting room : ${result.message}`);
+      }
+    } catch (error) {
+      setErrorMessage(error.message);
+    }
+    setTimeout(() => {
+      setSuccessMessage("");
+      setErrorMessage("");
+    }, 3000);
   };
 
   const calculateTotalPages = (filteredRooms, roomsPerPage) => {
@@ -127,7 +143,7 @@ const ExistingRooms = () => {
                     <td>{room.id}</td>
                     <td>{room.nameRoom}</td>
                     <td>{room.roomType?.nameRoomType}</td>
-                    <td>{room.status === "0" ? "Available" : "Occupied"}</td>
+                    <td>{room.status}</td>
                     <td className="gap-2">
                       <Link to={`/edit-room/${room.id}`} className="gap-2">
                         <span className="btn btn-info btn-sm">
