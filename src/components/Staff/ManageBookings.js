@@ -1,10 +1,26 @@
 /** @jsx jsx */
 import { css, jsx } from '@emotion/react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { authAPI, endpoints } from '../../configs/APIs';
 import { Modal, Button, Form } from 'react-bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
-const ReservationDetailsModal = ({ showModal, handleClose, selectedReservation, setSelectedReservation }) => {
+const ReservationDetailsModal = ({ showModal, handleClose, selectedReservation, setSelectedReservation, handleUpdate, handleDelete }) => {
+    const [availableRooms, setAvailableRooms] = useState([]);
+
+    useEffect(() => {
+        const fetchRooms = async () => {
+            try {
+                const response = await authAPI().get('http://192.168.1.233:8000/rooms/');
+                setAvailableRooms(response.data);
+            } catch (error) {
+                console.error('There was an error fetching the rooms!', error);
+            }
+        };
+
+        fetchRooms();
+    }, []);
+
     return (
         <Modal show={showModal} onHide={handleClose}>
             <Modal.Header closeButton>
@@ -31,18 +47,27 @@ const ReservationDetailsModal = ({ showModal, handleClose, selectedReservation, 
                         </Form.Group>
                         <Form.Group controlId="formRoom">
                             <Form.Label>Phòng</Form.Label>
-                            <Form.Control
-                                type="text"
-                                value={selectedReservation.room}
-                                readOnly
-                            />
+                            <Form.Select
+                                value={selectedReservation.room[0]?.nameRoom || ''}
+                                onChange={(e) => setSelectedReservation(prev => ({
+                                    ...prev,
+                                    room: availableRooms.filter(room => room.nameRoom === e.target.value)
+                                }))}
+                            >
+                                <option value="">Chọn phòng</option>
+                                {availableRooms.map(room => (
+                                    <option key={room.id} value={room.nameRoom}>
+                                        {room.nameRoom}
+                                    </option>
+                                ))}
+                            </Form.Select>
                         </Form.Group>
                         <Form.Group controlId="formBookDate">
                             <Form.Label>Ngày đặt</Form.Label>
                             <Form.Control
                                 type="text"
                                 value={selectedReservation.bookDate}
-                                readOnly
+                                onChange={(e) => setSelectedReservation(prev => ({ ...prev, bookDate: e.target.value }))}
                             />
                         </Form.Group>
                         <Form.Group controlId="formCheckin">
@@ -50,7 +75,7 @@ const ReservationDetailsModal = ({ showModal, handleClose, selectedReservation, 
                             <Form.Control
                                 type="text"
                                 value={selectedReservation.checkin}
-                                readOnly
+                                onChange={(e) => setSelectedReservation(prev => ({ ...prev, checkin: e.target.value }))}
                             />
                         </Form.Group>
                         <Form.Group controlId="formCheckout">
@@ -58,7 +83,7 @@ const ReservationDetailsModal = ({ showModal, handleClose, selectedReservation, 
                             <Form.Control
                                 type="text"
                                 value={selectedReservation.checkout}
-                                readOnly
+                                onChange={(e) => setSelectedReservation(prev => ({ ...prev, checkout: e.target.value }))}
                             />
                         </Form.Group>
                         <Form.Group controlId="formActive">
@@ -66,8 +91,12 @@ const ReservationDetailsModal = ({ showModal, handleClose, selectedReservation, 
                             <Form.Check
                                 type="checkbox"
                                 checked={selectedReservation.statusCheckin}
-                                readOnly
+                                onChange={(e) => setSelectedReservation(prev => ({
+                                    ...prev,
+                                    statusCheckin: e.target.checked
+                                }))}
                             />
+
                         </Form.Group>
                     </Form>
                 )}
@@ -76,7 +105,10 @@ const ReservationDetailsModal = ({ showModal, handleClose, selectedReservation, 
                 <Button variant="secondary" onClick={handleClose}>
                     Đóng
                 </Button>
-                <Button variant="primary">
+                <Button variant="danger" onClick={handleDelete}>
+                    Xóa
+                </Button>
+                <Button variant="primary" onClick={handleUpdate}>
                     Sửa
                 </Button>
             </Modal.Footer>
@@ -85,6 +117,9 @@ const ReservationDetailsModal = ({ showModal, handleClose, selectedReservation, 
 };
 
 const ManageBookings = () => {
+    const [reservations, setReservations] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
     const [showModal, setShowModal] = useState(false);
     const [selectedReservation, setSelectedReservation] = useState(null);
 
@@ -95,27 +130,71 @@ const ManageBookings = () => {
 
     const handleClose = () => setShowModal(false);
 
-    // Placeholder data
-    const reservations = [
-        {
-            id: 1,
-            guest: 'Nguyen Van A',
-            room: 'Phòng 101',
-            bookDate: '2024-08-01',
-            checkin: '2024-08-05',
-            checkout: '2024-08-10',
-            statusCheckin: true,
-        },
-        {
-            id: 2,
-            guest: 'Tran Thi B',
-            room: 'Phòng 202',
-            bookDate: '2024-08-02',
-            checkin: '2024-08-06',
-            checkout: '2024-08-11',
-            statusCheckin: false,
-        },
-    ];
+    const handleUpdate = async () => {
+        if (!selectedReservation) return;
+
+        // Tạo một bản sao của đối tượng selectedReservation để sửa đổi
+        const updatedReservation = { ...selectedReservation };
+        console.log('Dữ liệu cập nhật:', updatedReservation);
+
+        try {
+            // Gọi API để cập nhật phiếu đặt phòng với giá trị mới của statusCheckin
+            await authAPI().patch(endpoints['update_reservation'](updatedReservation.id), updatedReservation);
+
+            // Làm mới danh sách phiếu đặt phòng sau khi cập nhật
+            const response = await authAPI().get(endpoints['list_reservations']);
+
+            console.log("Kết quả cập nhật", response.data)
+            setReservations(response.data);
+        } catch (error) {
+            setError('Failed to update reservation');
+        } finally {
+            handleClose();
+        }
+    };
+
+
+    const handleDelete = async () => {
+        if (!selectedReservation) return;
+    
+        // Hiển thị hộp thoại xác nhận
+        const confirmed = window.confirm('Bạn có chắc chắn muốn xóa phiếu đặt phòng này?');
+    
+        if (confirmed) {
+            try {
+                // Gọi API để vô hiệu hóa phiếu đặt phòng
+                await authAPI().patch(endpoints['deactivate_reservation'](selectedReservation.id));
+    
+                // Làm mới danh sách phiếu đặt phòng sau khi vô hiệu hóa
+                const response = await authAPI().get(endpoints['list_reservations']);
+                setReservations(response.data);
+            } catch (error) {
+                setError('Failed to deactivate reservation');
+            } finally {
+                handleClose();
+            }
+        }
+    };
+    
+
+
+    useEffect(() => {
+        const fetchReservations = async () => {
+            try {
+                const response = await authAPI().get(endpoints['list_reservations']);
+                setReservations(response.data);
+            } catch (err) {
+                setError('Failed to fetch reservations');
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchReservations();
+    }, []);
+
+    if (loading) return <p>Loading...</p>;
+    if (error) return <p>{error}</p>;
 
     return (
         <div css={styles}>
@@ -138,13 +217,14 @@ const ManageBookings = () => {
                         <tr key={reservation.id}>
                             <td>{reservation.id}</td>
                             <td>{reservation.guest}</td>
-                            <td>{reservation.room}</td>
+                            <td>{reservation.room.map(r => r.nameRoom).join(', ')}</td>
                             <td>{reservation.bookDate}</td>
                             <td>{reservation.checkin}</td>
                             <td>{reservation.checkout}</td>
                             <td>{reservation.statusCheckin ? 'Đã đặt' : 'Chưa đặt'}</td>
                             <td>
                                 <Button variant="primary" onClick={() => handleShow(reservation)}>Sửa</Button>
+                                {/* <Button variant="danger" onClick={() => handleDelete(reservation)}>Xóa</Button> */}
                             </td>
                         </tr>
                     ))}
@@ -155,6 +235,8 @@ const ManageBookings = () => {
                 handleClose={handleClose}
                 selectedReservation={selectedReservation}
                 setSelectedReservation={setSelectedReservation}
+                handleUpdate={handleUpdate}
+                handleDelete={handleDelete}
             />
         </div>
     );

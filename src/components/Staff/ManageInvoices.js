@@ -1,14 +1,44 @@
 /** @jsx jsx */
 import { css, jsx } from '@emotion/react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { authAPI, endpoints } from '../../configs/APIs';
 import { Modal, Button, Form } from 'react-bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import moment from 'moment';
+import moment from 'moment';    
+import { useSnackbar } from 'notistack';
 
 const InvoiceDetailsModal = ({ showModal, handleClose, selectedReservation, services }) => {
-    const roomCost = 0;
-    const serviceCost = 0;
+    // Calculate room cost
+    const checkinDate = moment(selectedReservation?.checkin);
+    const checkoutDate = moment(selectedReservation?.checkout);
+    const numberOfDays = checkoutDate.diff(checkinDate, 'days');
+    const roomCost = selectedReservation?.room.reduce((total, room) => total + room.price * numberOfDays, 0) || 0;
+    const { enqueueSnackbar } = useSnackbar();
+
+    // Calculate service cost
+    const serviceCost = services.reduce((total, service) => total + service.price * service.quantity, 0);
+
+    // Calculate total cost
     const totalCost = roomCost + serviceCost;
+
+    const confirmBill = async () => {
+        try {
+            const form = new FormData();
+            form.append('totalAmount', totalCost);
+            form.append('reservation', selectedReservation.id);
+            const res = await authAPI().post(endpoints['bills'], form, {
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                },
+            });
+            if (res.status === 201) {
+                enqueueSnackbar("Xuất hóa đơn thành công", { variant: 'success' });
+                console.log("Xuất hóa đơn thành công");
+            }
+        } catch (error) {
+            console.error("Failed to create bill:", error);
+        }
+    };
 
     return (
         <Modal show={showModal} onHide={handleClose} dialogClassName="custom-modal">
@@ -101,7 +131,7 @@ const InvoiceDetailsModal = ({ showModal, handleClose, selectedReservation, serv
                 <Button variant="secondary" onClick={handleClose}>
                     Đóng
                 </Button>
-                <Button variant="primary">
+                <Button variant="primary" onClick={confirmBill}>
                     Xuất Hóa Đơn
                 </Button>
             </Modal.Footer>
@@ -110,14 +140,23 @@ const InvoiceDetailsModal = ({ showModal, handleClose, selectedReservation, serv
 };
 
 const ManageInvoices = () => {
+    const [reservations, setReservations] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
     const [showModal, setShowModal] = useState(false);
     const [selectedReservation, setSelectedReservation] = useState(null);
     const [services, setServices] = useState([]);
 
-    const handleShow = (reservation) => {
+    const handleShow = async (reservation) => {
         setSelectedReservation(reservation);
         setShowModal(true);
-        setServices([]);
+        try {
+            const response = await authAPI().get(endpoints.services_of_reservation(reservation.id));
+            console.log("Các dịch vụ có trong phiếu: ", response.data);
+            setServices(response.data);
+        } catch (error) {
+            console.error('Failed to fetch services', error);
+        }
     };
 
     const handleClose = () => {
@@ -125,10 +164,23 @@ const ManageInvoices = () => {
         setServices([]);
     };
 
-    const reservations = [
-        { id: 1, guest: 'John Doe', room: [{ nameRoom: '101' }], statusCheckin: true },
-        { id: 2, guest: 'Jane Smith', room: [{ nameRoom: '102' }], statusCheckin: false },
-    ];
+    useEffect(() => {
+        const fetchReservations = async () => {
+            try {
+                const response = await authAPI().get(endpoints['list_reservations']);
+                setReservations(response.data);
+            } catch (err) {
+                setError('Failed to fetch reservations');
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchReservations();
+    }, []);
+
+    if (loading) return <p>Loading...</p>;
+    if (error) return <p>{error}</p>;
 
     return (
         <div css={styles}>

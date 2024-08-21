@@ -1,38 +1,75 @@
 /** @jsx jsx */
 import { css, jsx } from '@emotion/react';
+import { useState, useEffect } from 'react';
 import Container from '../Global/Container';
+import { authAPI, endpoints } from '../../configs/APIs';
 import { Card, CardBody, CardTitle, CardText, Row, Col } from 'reactstrap';
 
 const ServiceList = () => {
-    // Dummy data to represent services for display purposes
-    const services = [
-        { service: 'Dịch vụ 1', nameService: 'Massage', price: 500000 },
-        { service: 'Dịch vụ 2', nameService: 'Giặt ủi', price: 100000 },
-        { service: 'Dịch vụ 3', nameService: 'Đưa đón sân bay', price: 200000 },
-    ];
+    const [services, setServices] = useState([]);
+    const [loadingServices, setLoadingServices] = useState(true);
+    const [error, setError] = useState('');
+
+    useEffect(() => {
+        const fetchServices = async () => {
+            try {
+                const response = await authAPI().get(endpoints['services']);
+                setServices(response.data);
+                console.log('API response status:', response.status);
+                console.log('API response data:', response.data);
+            } catch (err) {
+                setError('Failed to fetch services');
+                console.error('Error fetching services:', err);
+            } finally {
+                setLoadingServices(false);
+            }
+        };
+
+        fetchServices();
+    }, []);
+
+    // Group services by guest and room
+    const groupedServices = services.reduce((acc, service) => {
+        const key = `Danh sách dịch vụ đang có`;
+        if (!acc[key]) {
+            acc[key] = [];
+        }
+        acc[key].push(service);
+        return acc;
+    }, {});
+
+    if (loadingServices) {
+        return <div>Loading services...</div>;
+    }
+
+    if (error) {
+        return <div>{error}</div>;
+    }
 
     return (
         <Container>
             <div css={styles}>
                 <h1>Danh sách dịch vụ</h1>
-                <div css={groupStyle}>
-                    <h2 css={groupTitleStyle}>Danh sách dịch vụ đang có</h2>
-                    <Row>
-                        {services.map((service, index) => (
-                            <Col key={index} sm="12" md="6" lg="4">
-                                <Card css={cardStyle}>
-                                    <CardBody>
-                                        <CardTitle tag="h5" css={cardTitleStyle}>{service.service}</CardTitle>
-                                        <CardText css={cardTextStyle}>
-                                            <span css={serviceNameStyle}>{service.nameService}</span><br />
-                                            Giá: {service.price.toLocaleString()} VND<br />
-                                        </CardText>
-                                    </CardBody>
-                                </Card>
-                            </Col>
-                        ))}
-                    </Row>
-                </div>
+                {Object.entries(groupedServices).map(([key, services]) => (
+                    <div key={key} css={groupStyle}>
+                        <h2 css={groupTitleStyle}>{key}</h2>
+                        <Row>
+                            {services.map((service, index) => (
+                                <Col key={index} sm="12" md="6" lg="4">
+                                    <Card css={cardStyle}>
+                                        <CardBody>
+                                            <CardTitle tag="h5" css={cardTitleStyle}>{service.service}</CardTitle>
+                                            <CardText css={cardTextStyle}>
+                                                <span css={serviceNameStyle}>{service.nameService}</span><br />
+                                                Giá: {service.price.toLocaleString()} VND<br />
+                                            </CardText>
+                                        </CardBody>
+                                    </Card>
+                                </Col>
+                            ))}
+                        </Row>
+                    </div>
+                ))}
             </div>
         </Container>
     );

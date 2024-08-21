@@ -1,19 +1,70 @@
 /** @jsx jsx */
 import { css, jsx } from '@emotion/react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { authAPI, endpoints } from '../../configs/APIs';
+import moment from 'moment';
 import { Button, Modal } from 'react-bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
 const InvoiceList = () => {
+  const [bills, setBills] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [selectedInvoice, setSelectedInvoice] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [services, setServices] = useState([]);
 
-  const handleOpenModal = () => {
-    setShowModal(true);
+  useEffect(() => {
+    const fetchBills = async () => {
+      try {
+        const response = await authAPI().get(endpoints['bills']);
+        setBills(response.data);
+      } catch (err) {
+        setError('Failed to fetch bills');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchBills();
+  }, []);
+
+  const handleOpenModal = async (invoiceId) => {
+    try {
+      const response = await authAPI().get(`${endpoints['bills']}${invoiceId}/`);
+      setSelectedInvoice(response.data);
+
+      // Fetch associated services
+      const servicesResponse = await authAPI().get(endpoints.services_of_invoice(invoiceId));
+      setServices(servicesResponse.data);
+
+      setShowModal(true);
+    } catch (err) {
+      setError('Failed to fetch invoice details');
+    }
   };
 
   const handleCloseModal = () => {
     setShowModal(false);
+    setSelectedInvoice(null);
+    setServices([]);
   };
+
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>{error}</div>;
+
+  const calculateRoomCost = () => {
+    const checkinDate = moment(selectedInvoice?.reservation.checkin);
+    const checkoutDate = moment(selectedInvoice?.reservation.checkout);
+    const numberOfDays = checkoutDate.diff(checkinDate, 'days');
+    return selectedInvoice?.reservation.room.reduce((total, room) => total + room.price * numberOfDays, 0) || 0;
+  };
+
+  const calculateServiceCost = () => {
+    return services.reduce((total, service) => total + service.price * service.quantity, 0);
+  };
+
+  const totalCost = calculateRoomCost() + calculateServiceCost();
 
   return (
     <div css={styles}>
@@ -29,63 +80,64 @@ const InvoiceList = () => {
           </tr>
         </thead>
         <tbody>
-          <tr>
-            <td>1</td>
-            <td>Nguyen Van A</td>
-            <td>01-08-2024</td>
-            <td>05-08-2024</td>
-            <td>3,000,000 VND</td>
-          </tr>
-          <tr>
-            <td>2</td>
-            <td>Tran Thi B</td>
-            <td>02-08-2024</td>
-            <td>06-08-2024</td>
-            <td>4,500,000 VND</td>
-          </tr>
+          {bills.map((bill) => (
+            <tr key={bill.id}>
+              <td>{bill.id}</td>
+              <td>{bill.reservation.guest}</td>
+              <td>{new Date(bill.reservation.checkin).toLocaleDateString()}</td>
+              <td>{new Date(bill.reservation.checkout).toLocaleDateString()}</td>
+              <td>{bill.totalAmount}</td>
+            </tr>
+          ))}
         </tbody>
       </table>
 
-      <Button onClick={handleOpenModal}>Xem chi tiết hóa đơn</Button>
-
-      <Modal show={showModal} onHide={handleCloseModal} dialogClassName="custom-modal">
-        <Modal.Header closeButton>
-          <Modal.Title>Invoice Details</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <div css={formStyles}>
-            <div className="form-group">
-              <label>ID</label>
-              <input type="text" value="1" readOnly />
-            </div>
-            <div className="form-group">
-              <label>Guest</label>
-              <input type="text" value="Nguyen Van A" readOnly />
-            </div>
-            <div className="form-group">
-              <label>Check-in</label>
-              <input type="text" value="01-08-2024 12:00:00" readOnly />
-            </div>
-            <div className="form-group">
-              <label>Check-out</label>
-              <input type="text" value="05-08-2024 12:00:00" readOnly />
-            </div>
-            <div className="form-group">
-              <label>Total Amount</label>
-              <input type="text" value="3,000,000 VND" readOnly />
-            </div>
-            <div className="form-group">
-              <label>Services</label>
-              <div css={serviceStyle}>
-                <p>Room Service: 500,000 VND x 1</p>
+      {selectedInvoice && (
+        <Modal show={showModal} onHide={handleCloseModal} dialogClassName="custom-modal">
+          <Modal.Header closeButton>
+            <Modal.Title>Invoice Details</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <div css={formStyles}>
+              <div className="form-group">
+                <label>ID</label>
+                <input type="text" value={selectedInvoice.id} readOnly />
+              </div>
+              <div className="form-group">
+                <label>Guest</label>
+                <input type="text" value={selectedInvoice.reservation.guest} readOnly />
+              </div>
+              <div className="form-group">
+                <label>Check-in</label>
+                <input type="text" value={moment(selectedInvoice.reservation.checkin).format('DD-MM-YYYY HH:mm:ss')} readOnly />
+              </div>
+              <div className="form-group">
+                <label>Check-out</label>
+                <input type="text" value={moment(selectedInvoice.reservation.checkout).format('DD-MM-YYYY HH:mm:ss')} readOnly />
+              </div>
+              <div className="form-group">
+                <label>Total Amount</label>
+                <input type="text" value={`${totalCost.toLocaleString()} VND`} readOnly />
+              </div>
+              <div className="form-group">
+                <label>Services</label>
+                {services.length ? (
+                  services.map(service => (
+                    <div key={service.id} css={serviceStyle}>
+                      <p>{service.nameService}: {service.price.toLocaleString()} VND x {service.quantity}</p>
+                    </div>
+                  ))
+                ) : (
+                  <p>No services included.</p>
+                )}
               </div>
             </div>
-          </div>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={handleCloseModal}>Close</Button>
-        </Modal.Footer>
-      </Modal>
+          </Modal.Body>
+          <Modal.Footer>
+            <Button variant="secondary" onClick={handleCloseModal}>Close</Button>
+          </Modal.Footer>
+        </Modal>
+      )}
     </div>
   );
 };
