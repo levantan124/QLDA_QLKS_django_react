@@ -39,7 +39,7 @@ const AddService = () => {
         const fetchServices = async () => {
             try {
                 const response = await authAPI().get(endpoints['services']);
-                // console.log(response.data)
+                console.log('Fetched services:', response.data);
                 setServices(response.data);
             } catch (err) {
                 setError('Failed to fetch services');
@@ -55,10 +55,14 @@ const AddService = () => {
         const selectedServiceId = e.target.value;
         const selectedService = services.find(service => service.id === parseInt(selectedServiceId));
         setSelectedService(selectedServiceId);
-        setNameService(selectedService.nameService);
-        setPrice(selectedService.price);
-    };    
-
+        if (selectedService) {
+            setNameService(selectedService.nameService);
+            setPrice(selectedService.price);
+        } else {
+            console.error('Selected service not found');
+        }
+    };
+    
     const handleQuantityChange = (e) => {
         const newQuantity = e.target.value;
         setQuantity(newQuantity);
@@ -71,10 +75,10 @@ const AddService = () => {
             service: selectedService,
             quantity,
         };
-
+        
         try {
+            console.log(serviceData); // Đã sửa lỗi ở đây            
             const response = await authAPI().post(endpoints['reservation_service'], serviceData);
-
             if (response.status === 201) {
                 enqueueSnackbar('Dịch vụ đã được thêm thành công', { variant: 'success' });
                 setNameService('');
@@ -103,26 +107,27 @@ const AddService = () => {
             <div css={styles}>
                 <h1>Thêm dịch vụ</h1>
                 <form onSubmit={handleSubmit}>
-                    <div className="form-group">
-                        <label>Tên dịch vụ</label>
-                        {loadingServices ? (
-                            <p>Loading services...</p>
-                        ) : (
-                            <select
-                                value={selectedService}
-                                onChange={handleServiceChange}
-                                required
-                            >
-                                <option value="">Chọn dịch vụ</option>
-                                {services.map((service) => (
-                                    <option key={service.id} value={service.id}>
-                                        {service.nameService} - Giá: {formatCurrency(service.price)}
-                                    </option>
-                                ))}
-                            </select>
-                        )}
-                        {error && <p>{error}</p>}
-                    </div>
+                        <div className="form-group">
+                            <label>Tên dịch vụ</label>
+                            {loadingServices ? (
+                                <p>Loading services...</p>
+                            ) : (
+                                <select
+                                    value={selectedService}
+                                    onChange={handleServiceChange}
+                                    required
+                                >
+                                    <option value="">Chọn dịch vụ</option>
+                                    {services.map((service) => (
+                                        <option key={service.id} value={service.id}>
+                                            {service.nameService} - Giá: {formatCurrency(service.price)}
+                                        </option>
+                                    ))}
+                                </select>
+
+                            )}
+                            {error && <p>{error}</p>}
+                        </div>
                     <div className="form-group">
                         <label>Số lượng</label>
                         <input
@@ -156,7 +161,7 @@ const AddService = () => {
                                 <option value="">Chọn phiếu</option>
                                 {reservations.map((reservation) => (
                                     <option key={reservation.id} value={reservation.id}>
-                                        {reservation.guest} - {reservation.room.map(r => r.nameRoom).join(', ')}
+                                        {reservation.guest?.name} - {reservation.room.map(r => r.nameRoom).join(', ')}
                                     </option>
                                 ))}
                             </select>

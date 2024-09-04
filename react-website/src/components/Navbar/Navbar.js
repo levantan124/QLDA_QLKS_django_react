@@ -17,6 +17,49 @@ const Navbar = () => {
         <Logo />
         <Menu openMenu={openMenu} />
 
+        {user && user.role === 2 && (
+          <div className="nav-actions">
+            <a href="/manage-bookings" className="manage-bookings">
+              Quản lý đặt phòng
+            </a>
+            <div className="service-menu">
+              <a href="#" className="manage-services">
+                Quản lý dịch vụ
+              </a>
+              <div className="dropdown">
+                <a href="/service-list">Xem danh sách dịch vụ</a>
+                <a href="/add-service">Thêm DV vào phiếu</a>
+              </div>
+            </div>
+            <div className="invoice-menu" onMouseEnter={() => setShowInvoiceMenu(true)} onMouseLeave={() => setShowInvoiceMenu(false)}>
+              <a href="#" className="manage-bills">
+                Quản lý hóa đơn
+              </a>
+              {showInvoiceMenu && (
+                <div className="dropdown">
+                  <a href="/list-invoice">Danh sách hóa đơn</a>
+                  <a href="/manage-invoice">Xuất hóa đơn</a>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {user && user.role === 1 && (
+          <div className="nav-actions">
+            <div className="service-menu">
+              <a href="/admin" className="manage-services">
+                Admin
+              </a>
+              <div className="dropdown">
+                <a href="/existing-room">Phòng</a>
+                <a href="/existing-roomTypes">Loại phòng</a>
+                <a href="/existing-employees">Nhân viên</a>
+              </div>
+            </div>
+          </div>
+        )}
+
         <i
           onClick={() => setOpenMenu(!openMenu)}
           id="burgerMenu"

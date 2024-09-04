@@ -1,35 +1,32 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { getAllRooms } from "../utils/ApiFunctions";
 import { Link } from "react-router-dom";
 import { Card, Carousel, Col, Container, Row } from "react-bootstrap";
 
 const RoomCarousel = () => {
-  // Dữ liệu ảo thay thế
-  const mockRooms = [
-    {
-      id: 1,
-      roomType: { nameRoomType: "Deluxe Room", price: 120, image: "/path/to/deluxe-room.jpg" },
-    },
-    {
-      id: 2,
-      roomType: { nameRoomType: "Suite", price: 200, image: "/path/to/suite-room.jpg" },
-    },
-    {
-      id: 3,
-      roomType: { nameRoomType: "Standard Room", price: 80, image: "/path/to/standard-room.jpg" },
-    },
-    {
-      id: 4,
-      roomType: { nameRoomType: "Luxury Room", price: 150, image: "/path/to/luxury-room.jpg" },
-    },
-    {
-      id: 5,
-      roomType: { nameRoomType: "Single Room", price: 70, image: "/path/to/single-room.jpg" },
-    },
-    {
-      id: 6,
-      roomType: { nameRoomType: "Double Room", price: 100, image: "/path/to/double-room.jpg" },
-    },
-  ];
+  const [rooms, setRooms] = useState([]);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    setIsLoading(true);
+    getAllRooms()
+      .then((data) => {
+        setRooms(data);
+        setIsLoading(false);
+      })
+      .catch((error) => {
+        setErrorMessage(error.message);
+        setIsLoading(false);
+      });
+  }, []);
+
+  if (isLoading) {
+    return <div className="mt-5">Loading rooms....</div>;
+  }
+  if (errorMessage) {
+    return <div className=" text-danger mb-5 mt-5">Error : {errorMessage}</div>;
+  }
 
   return (
     <section className="bg-light mb-5 mt-5 shadow">
@@ -38,17 +35,19 @@ const RoomCarousel = () => {
       </Link>
       <Container>
         <Carousel indicators={false}>
-          {[...Array(Math.ceil(mockRooms.length / 4))].map((_, index) => (
+          {[...Array(Math.ceil(rooms.length / 4))].map((_, index) => (
             <Carousel.Item key={index}>
               <Row>
-                {mockRooms.slice(index * 4, index * 4 + 4).map((room) => {
+                {rooms.slice(index * 4, index * 4 + 4).map((room) => {
+                  // Clean the image URL for each room
+                  const cleanImageUrl = room.roomType?.image?.replace("image/upload/", "");
                   return (
                     <Col key={room.id} className="mb-4" xs={12} md={6} lg={3}>
                       <Card>
                         <Link to={`/book-room/${room.id}`}>
                           <Card.Img
                             variant="top"
-                            src={room.roomType?.image}
+                            src={cleanImageUrl}
                             alt="Room Photo"
                             className="w-100"
                             style={{ height: "200px" }}

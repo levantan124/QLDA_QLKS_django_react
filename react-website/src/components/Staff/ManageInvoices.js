@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { authAPI, endpoints } from '../../configs/APIs';
 import { Modal, Button, Form } from 'react-bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import moment from 'moment';    
+import moment from 'moment';
 import { useSnackbar } from 'notistack';
 
 const InvoiceDetailsModal = ({ showModal, handleClose, selectedReservation, services }) => {
@@ -199,7 +199,7 @@ const ManageInvoices = () => {
                     {reservations.map(reservation => (
                         <tr key={reservation.id}>
                             <td>{reservation.id}</td>
-                            <td>{reservation.guest}</td>
+                            <td>{reservation.guest?.username}</td>
                             <td>{reservation.room.map(r => r.nameRoom).join(', ')}</td>
                             <td>{reservation.statusCheckin ? 'Đã đặt' : 'Chưa đặt'}</td>
                             <td>

@@ -36,7 +36,7 @@ const Footer = () => {
                             <input type="text" placeholder="Enter your Email" />
                             <Button />
                         </div>
-                    
+                        <p>Esteem spirit temper too say adieus who direct esteem esteems luckily.</p>
                     </div>
                 </FooterCard>
             </Container>

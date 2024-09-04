@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { addEmployee, uploadToCloudinary } from "../utils/ApiFunctions";
 import RoleSelector from "../employee/RoleSelector";
 import { Link } from "react-router-dom";
 
@@ -7,7 +8,9 @@ const AddEmployee = () => {
     username: "",
     name: "",
     email: "",
-    role: "", 
+    role: "", // Khởi tạo role là chuỗi rỗng
+    password: "123456", // Mật khẩu mặc định
+    isActive: true,
     avatar: null,
   });
 
@@ -21,7 +24,7 @@ const AddEmployee = () => {
   };
 
   const handleRoleChange = (role) => {
-    setNewEmployee({ ...newEmployee, role: role }); 
+    setNewEmployee({ ...newEmployee, role: role }); // Lưu trữ giá trị role dưới dạng số nguyên
   };
 
   const handleImageChange = (e) => {
@@ -30,18 +33,34 @@ const AddEmployee = () => {
     setImagePreview(URL.createObjectURL(selectedImage));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (newEmployee.username && newEmployee.name && newEmployee.email && newEmployee.role) {
-      setSuccessMessage("A new employee was added successfully!");
-      setErrorMessage("");
-      setNewEmployee({ username: "", name: "", email: "", role: "", avatar: null });
-      setImagePreview("");
-    } else {
-      setErrorMessage("Please fill in all required fields.");
-      setSuccessMessage("");
-    }
+    try {
+      const photoUrl = await uploadToCloudinary(newEmployee.avatar);
+      console.log("Role as integer:", newEmployee.role); // Kiểm tra giá trị role
 
+      const success = await addEmployee(
+        newEmployee.username,
+        newEmployee.name,
+        newEmployee.email,
+        newEmployee.role, // Truyền role dưới dạng số nguyên
+        newEmployee.password,
+        newEmployee.isActive,
+        photoUrl
+      );
+  
+      console.log("API response:", success);
+      if (success) {
+        setSuccessMessage("A new employee was added successfully!");
+        setNewEmployee({ username: "", name: "", email: "", role: "", password: "123456", isActive: true, avatar: "" });
+        setImagePreview("");
+        setErrorMessage("");
+      } else {
+        setErrorMessage("Error adding new employee");
+      }
+    } catch (error) {
+      setErrorMessage(error.message);
+    }
     setTimeout(() => {
       setSuccessMessage("");
       setErrorMessage("");
@@ -57,6 +76,7 @@ const AddEmployee = () => {
             {successMessage && (
               <div className="alert alert-success fade show">{successMessage}</div>
             )}
+
             {errorMessage && <div className="alert alert-danger fade show">{errorMessage}</div>}
 
             <form onSubmit={handleSubmit}>

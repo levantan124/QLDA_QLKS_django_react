@@ -1,32 +1,30 @@
 /** @jsx jsx */
-import { jsx, css } from "@emotion/react"; // Chuyển từ "@emotion/core" sang "@emotion/react" nếu đang dùng phiên bản mới
+import { jsx, css } from "@emotion/core";
+import { useContext } from "react";
 import { Link } from 'react-router-dom';
-import { useState } from 'react';
 
+import { MyUserContext, MyDispatchContext } from "../../configs/MyContext";
 const Menu = ({ openMenu }) => {
-  // Giả lập dữ liệu người dùng
-  const [user, setUser] = useState({
-    name: "Nguyễn Văn A",
-    isLoggedIn: true,
-  });
-
+  const user = useContext(MyUserContext);
+  const dispatch = useContext(MyDispatchContext);
   const handleLogout = () => {
-    setUser(null); // Set user thành null để giả lập đăng xuất
-  };
+    dispatch({ type: "logout" });
+    // window.location.reload(); // Navigate to the home page or any other desired route after logout
+};
 
   return (
-    <div css={styles} className={openMenu ? "menu" : "hidden"}>
-      <a href=""><Link to="/">Home</Link></a>
-      <a href=""><Link to="/contact">Liên hệ</Link></a>
-      {user && user.isLoggedIn ? (
-        <div className="user-section">
-          <a><Link to="/info">{user.name}</Link></a>
-          <a onClick={handleLogout}><Link to="/">Đăng xuất</Link></a>
-        </div>
-      ) : (
-        <a href="/login">Đăng nhập</a>
-      )}
-    </div>
+      <div css={styles} className={openMenu ? "menu" : "hidden"}>
+          <a href=""><Link to="/">Home</Link></a>
+          <a href=""><Link to="/">Liên hệ</Link></a>
+          {user ? (
+                <div className="user-section">
+                    <a><Link to="/info">{user.name}</Link></a>
+                    <a onClick={handleLogout}><Link to="/">Đăng xuất</Link></a>
+                </div>
+            ) : (
+                <a href="/login">Đăng nhập</a>
+            )}
+      </div>
   );
 };
 
