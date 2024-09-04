@@ -178,7 +178,7 @@ export async function addRoomType(nameRoomType, price, quantity, imageUrl) {
     };
    
 	try {
-		const response = await axios.post("/roomtypes/", data, {
+		const response = await api.post("/roomtypes/", data, {
 			headers: {
 				'Content-Type': 'multipart/form-data'
 			}
@@ -220,7 +220,7 @@ export async function updateRoomType(roomTypeId, roomTypeData) {
 
     try {
 		console.log(...formData.entries());
-        const response = await axios.patch(`/roomtypes/${roomTypeId}/`, formData, {
+        const response = await api.patch(`/roomtypes/${roomTypeId}/`, formData, {
             headers: {
                 'Content-Type': 'application/json'
             }
