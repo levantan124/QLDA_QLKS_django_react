@@ -2,7 +2,8 @@ import axios from "axios";
 import moment from "moment";
 import cookie from "react-cookies";
 
-export const BASE_URL = 'http://192.168.1.113:8000/';
+// export const BASE_URL = 'http://192.168.1.113:8000/';
+export const BASE_URL = 'https://khamng.pythonanywhere.com/';
 
 // export const BASE_URL = 'http://127.0.0.1:8000/';
 

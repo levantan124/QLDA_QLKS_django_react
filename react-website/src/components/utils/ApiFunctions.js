@@ -1,9 +1,11 @@
 import axios from "axios"
 import cookie from "react-cookies"
 
-const BASE_URL = "http://192.168.1.113:8000"
+// const BASE_URL = "http://192.168.1.113:8000"
+export const BASE_URL = 'https://khamng.pythonanywhere.com/';
+
 export const api = axios.create({
-	baseURL: "http://192.168.1.113:8000"
+	baseURL: BASE_URL
 })
 
 export const getHeader = () => {
