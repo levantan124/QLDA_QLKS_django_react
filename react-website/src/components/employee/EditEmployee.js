@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useParams } from "react-router-dom";
 import RoleSelector from "../employee/RoleSelector"; // Giả sử bạn có component chọn vai trò
+import { getEmployeeById, updateEmployee } from "../../configs/APIs"; 
 
 const EditEmployee = () => {
   const [employee, setEmployee] = useState({
@@ -11,7 +12,6 @@ const EditEmployee = () => {
     address: "",
     DOB: "",
     sex: "",
-    avatar: null,
   });
 
   const [imagePreview, setImagePreview] = useState("");
@@ -31,38 +31,36 @@ const EditEmployee = () => {
   };
 
   useEffect(() => {
-    // Giả sử đây là chỗ bạn sẽ lấy dữ liệu nhân viên từ API, nhưng hiện tại phần này chỉ có frontend.
-    // Có thể giả lập lấy dữ liệu từ nhân viên hiện tại.
-    const mockEmployeeData = {
-      name: "John Doe",
-      role: "1",
-      email: "johndoe@example.com",
-      phone: "123456789",
-      address: "123 Main St",
-      DOB: "1990-01-01",
-      sex: "1",
-      avatar: null,
-    };
-    setEmployee(mockEmployeeData);
-    setImagePreview(mockEmployeeData.avatar);
+    const fetchEmployee = async () => {
+      try {
+          const employeeData = await getEmployeeById(employeeId);
+          setEmployee(employeeData);
+          setImagePreview(employeeData.avatar);
+      } catch (error) {
+          console.error(error);
+      }
+  };
+
+  fetchEmployee();
   }, [employeeId]);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Xử lý cập nhật frontend
-    if (employee.name && employee.role && employee.email) {
-      setSuccessMessage("Employee updated successfully!");
-      setErrorMessage("");
-    } else {
-      setErrorMessage("Please fill in all required fields.");
-      setSuccessMessage("");
-    }
-
-    // Xóa thông báo sau 3 giây
-    setTimeout(() => {
-      setSuccessMessage("");
-      setErrorMessage("");
-    }, 3000);
+    try {
+      const response = await updateEmployee(employeeId, employee);
+      if (response.status === 200) { // Assuming the success status is 200
+          setSuccessMessage("Employee updated successfully!");
+          const updatedEmployeeData = await getEmployeeById(employeeId);
+          setEmployee(updatedEmployeeData);
+          setImagePreview(updatedEmployeeData.avatar);
+          setErrorMessage("");
+      } else {
+          setErrorMessage("Error updating employee");
+      }
+  } catch (error) {
+      console.error(error);
+      setErrorMessage(error.message);
+  }
   };
 
   return (

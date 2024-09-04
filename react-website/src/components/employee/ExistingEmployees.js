@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { Col, Row } from "react-bootstrap";
 import EmployeeFilter from "../employee/EmployeeFilter";
-// import EmployeePaginator from "../common/EmployeePaginator";
 import { FaEdit, FaEye, FaPlus, FaTrashAlt } from "react-icons/fa";
 import { Link } from "react-router-dom";
+import { deleteEmployee, getAllEmployees } from "../../configs/APIs";
+
 
 const ExistingEmployees = () => {
   const [employees, setEmployees] = useState([]);
@@ -16,18 +17,25 @@ const ExistingEmployees = () => {
   const [successMessage, setSuccessMessage] = useState("");
 
   useEffect(() => {
-    const mockEmployees = [
-      { id: 1, name: "John Doe", role: 1 },
-      { id: 2, name: "Jane Smith", role: 2 },
-      { id: 3, name: "Alice Johnson", role: 1 },
-      { id: 4, name: "Bob Brown", role: 2 },
-      { id: 5, name: "Charlie Davis", role: 1 },
-    ];
-    
-    setEmployees(mockEmployees);
-    setFilteredEmployees(mockEmployees);
-    setIsLoading(false);
+    fetchEmployees();
+
   }, []);
+
+  const fetchEmployees = async () => {
+    setIsLoading(true);
+    try {
+      const result = await getAllEmployees();
+      const filteredResult = result.filter(
+        (employee) => employee.role === 1 || employee.role === 2
+      );
+      setEmployees(filteredResult);
+      setFilteredEmployees(filteredResult);
+      setIsLoading(false);
+    } catch (error) {
+      setErrorMessage(error.message);
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (selectedRole === "") {
@@ -45,14 +53,18 @@ const ExistingEmployees = () => {
     setCurrentPage(pageNumber);
   };
 
-  const handleDelete = (employeeId) => {
-    // Giả lập xóa nhân viên
-    const updatedEmployees = employees.filter(emp => emp.id !== employeeId);
-    setEmployees(updatedEmployees);
-    setFilteredEmployees(updatedEmployees);
-    setSuccessMessage(`Employee No ${employeeId} was deleted`);
-    setErrorMessage("");
-
+  const handleDelete = async (employeeId) => {
+    try {
+      const result = await deleteEmployee(employeeId);
+      if (result === "") {
+        setSuccessMessage(`Employee No ${employeeId} was deleted`);
+        fetchEmployees();
+      } else {
+        console.error(`Error deleting employee: ${result.message}`);
+      }
+    } catch (error) {
+      setErrorMessage(error.message);
+    }
     setTimeout(() => {
       setSuccessMessage("");
       setErrorMessage("");

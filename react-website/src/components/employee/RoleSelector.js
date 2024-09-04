@@ -5,13 +5,14 @@ const RoleSelector = ({ handleRoleChange, selectedRole }) => {
     { value: 1, label: "Admin" },
     { value: 2, label: "Lễ tân" },
   ];
+  const currentRole = selectedRole || "";
 
   return (
     <select
       className="form-select"
       name="role"
-      value={selectedRole}
-      onChange={(e) => handleRoleChange(parseInt(e.target.value, 10))} // Chuyển đổi giá trị thành số nguyên
+      value={currentRole}
+      onChange={handleRoleChange}
     >
       <option value="">Select a role...</option>
       {roles.map((role) => (

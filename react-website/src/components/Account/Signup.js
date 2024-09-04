@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Form, Button, Container, Row, Col, Modal } from 'react-bootstrap';
+import APIs, { endpoints } from '../../configs/APIs';
+// import { useSnackbar } from 'notistack';
 
-const Signup = () => {
+const Signup = (history) => {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [name, setName] = useState('');
@@ -12,45 +14,73 @@ const Signup = () => {
     const [phone, setPhone] = useState('');
     const [email, setEmail] = useState('');
     const [sex, setSex] = useState(2); // Default to 'Nam'
+    const [role, setRole] = useState(3); // Default to 'Khách hàng'
     const [error, setError] = useState('');
+    const nav = useNavigate();
     const [showSuccessModal, setShowSuccessModal] = useState(false);
 
-    const handleSignup = () => {
-        // Giả lập logic đăng ký thành công
-        if (!username || !password || !name || !email || !phone || !DOB || !Address) {
-            setError('Vui lòng điền đầy đủ thông tin.');
-            return;
-        }
 
-        if (!avatar) {
-            setError('Vui lòng chọn ảnh đại diện.');
-            return;
-        }
-
-        // Giả lập thành công đăng ký
-        console.log('Fake user registration:', {
-            username,
-            password,
-            name,
-            avatar,
-            DOB,
-            Address,
-            phone,
-            email,
-            sex,
-        });
-
-        setShowSuccessModal(true); // Hiển thị modal thông báo
-    };
-
-    const closeModal = () => {
+    const closeModal = async () => {
         setShowSuccessModal(false);
-        // Giả lập điều hướng đến trang đăng nhập
-        console.log('Redirect to login page');
+        nav('/login');
+    }
+
+    const handleSignup = async () => {
+        try {
+
+            // Kiểm tra các trường bắt buộc
+            if (!username || !password || !name || !email || !phone || !DOB || !Address) {
+                setError('Vui lòng điền đầy đủ thông tin.');
+                return;
+            }
+
+            if (!avatar) {
+                setError('Vui lòng chọn ảnh đại diện.');
+                return;
+            }
+            // // Kiểm tra username và email đã tồn tại
+            // const checkUsername = await APIs.get(`${endpoints['signup']}?username=${username}`);
+            // const checkEmail = await APIs.get(`${endpoints['signup']}?email=${email}`);
+
+            const formData = new FormData();
+            formData.append('username', username);
+            formData.append('password', password);
+            formData.append('name', name);
+            if (avatar) {
+                formData.append('avatar', avatar);
+            }
+            formData.append('DOB', DOB);
+            formData.append('Address', Address);
+            formData.append('phone', phone);
+            formData.append('email', email);
+            formData.append('sex', sex);
+            formData.append('role', role);
+
+
+            // Hiển thị các thông tin đã có trong form lên console
+            for (let [key, value] of formData.entries()) {
+                console.log(`${key}: ${value}`);
+            }
+            let response = await APIs.post(endpoints['signup'], formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                }
+            });
+
+            console.log('User registered successfully:', response.data);
+            if (response.status === 201) {
+                console.error('Tạo tài khoản thành công!');
+                setShowSuccessModal(true); // Hiển thị modal thông báo
+                // nav("/d");
+            }
+        } catch (error) {
+            console.error('Error while signupg up:', error);
+            setError('Đăng ký không thành công. Vui lòng thử lại.');
+        }
     };
 
     return (
-        <Container fluid className="d-flex justify-content-center align-items-center"
+        <Container fluid className="d-flex justify-content-center align-items-center "
             style={{
                 minHeight: '100vh',
                 backgroundColor: '#f0f2f5',
@@ -58,10 +88,11 @@ const Signup = () => {
                 backgroundSize: 'cover',
                 backgroundPosition: 'center',
                 backgroundRepeat: 'no-repeat',
-                padding: '200px',
+                padding :'200px',
+                
             }}>
             <Row className="justify-content-center">
-                <Col md="6" lg="6">
+                <Col md="6" lg="6" style={{ width: 'calc(100% + 100px)' }}>
                     <div className="card p-4 shadow bg-white rounded" style={{ borderRadius: '8px', padding: '80px' }}>
                         <Form>
                             <h1 className="text-center mb-4" style={{ color: '#1877f2' }}>Đăng ký</h1>
@@ -108,6 +139,7 @@ const Signup = () => {
                                 </Col>
                                 <Col md="6">
                                     <Form.Group controlId="formBasicAvatar">
+
                                         <Form.Control
                                             type="file"
                                             placeholder="Avatar"
@@ -207,7 +239,10 @@ const Signup = () => {
                 </Modal.Footer>
             </Modal>
         </Container>
+
+
     );
 };
+
 
 export default Signup;

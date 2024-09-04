@@ -1,13 +1,19 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { getRoomTypes } from "../../configs/APIs"
+
 
 const RoomTypeSelector = ({ handleRoomInputChange, newRoom }) => {
-  const [roomTypes, setRoomTypes] = useState([
-    { id: 1, nameRoomType: "Single Room" },
-    { id: 2, nameRoomType: "Double Room" },
-    { id: 3, nameRoomType: "Suite" }
-  ]);
+  const [roomTypes, setRoomTypes] = useState([])
+
   const [showNewRoomTypeInput, setShowNewRoomTypeInput] = useState(false);
   const [newRoomType, setNewRoomType] = useState("");
+
+  useEffect(() => {
+		getRoomTypes().then((data) => {
+			setRoomTypes(data) 
+		})
+		// console.log(roomTypes)
+	}, [])
 
   const handleNewRoomTypeInputChange = (e) => {
     setNewRoomType(e.target.value);
@@ -15,8 +21,7 @@ const RoomTypeSelector = ({ handleRoomInputChange, newRoom }) => {
 
   const handleAddNewRoomType = () => {
     if (newRoomType !== "") {
-      const newType = { id: roomTypes.length + 1, nameRoomType: newRoomType };
-      setRoomTypes([...roomTypes, newType]);
+      setRoomTypes([...roomTypes, newRoomType])
       setNewRoomType("");
       setShowNewRoomTypeInput(false);
     }

@@ -1,5 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { addRoom, getRoomTypes } from "../../configs/APIs"
+
 
 const AddRoom = () => {
   const [newRoom, setNewRoom] = useState({
@@ -12,11 +14,8 @@ const AddRoom = () => {
   const [successMessage, setSuccessMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [imagePreview, setImagePreview] = useState("");
-  const [roomTypes, setRoomTypes] = useState([
-    { id: "1", nameRoomType: "Single" },
-    { id: "2", nameRoomType: "Double" },
-    { id: "3", nameRoomType: "Suite" },
-  ]);
+  const [roomTypes, setRoomTypes] = useState([]);
+
 
   const handleRoomInputChange = (e) => {
     const { name, value } = e.target;
@@ -29,13 +28,36 @@ const AddRoom = () => {
     setImagePreview(URL.createObjectURL(selectedImage));
   };
 
-  const handleSubmit = (e) => {
+  useEffect(() => {
+    // Fetch room types from the API
+    const fetchRoomTypes = async () => {
+      try {
+        const response = await getRoomTypes()
+        setRoomTypes(response.data);
+      } catch (error) {
+        console.error("Error fetching room types:", error);
+        setErrorMessage("Error fetching room types.");
+      }
+    };
+
+    fetchRoomTypes();
+  }, []);
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Simulate a successful form submission
-    setSuccessMessage("A new room was added successfully!");
-    setNewRoom({ nameRoom: "", roomType: "", status: 0, active: true });
-    setImagePreview("");
-    setErrorMessage("");
+    try {
+			const success = await addRoom(newRoom.nameRoom, newRoom.roomType, newRoom.status, newRoom.active)
+			console.log('API response:', success)
+			if (success) {
+				setSuccessMessage("A new room was added successfully!")
+				setNewRoom({ nameRoom: "", roomType: "", status: 0, active: true })
+				setImagePreview("")
+				setErrorMessage("")
+			} else {
+				setErrorMessage("Error adding new room")
+			}
+		} catch (error) {
+			setErrorMessage(error.message)
+		}
     setTimeout(() => {
       setSuccessMessage("");
       setErrorMessage("");

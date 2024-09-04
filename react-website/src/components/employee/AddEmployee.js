@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import RoleSelector from "../employee/RoleSelector";
 import { Link } from "react-router-dom";
+import { addEmployee, uploadToCloudinary } from "../../configs/APIs";
+
 
 const AddEmployee = () => {
   const [newEmployee, setNewEmployee] = useState({
@@ -9,6 +11,8 @@ const AddEmployee = () => {
     email: "",
     role: "", 
     avatar: null,
+    password: "123456", // Mật khẩu mặc định
+    isActive: true,
   });
 
   const [successMessage, setSuccessMessage] = useState("");
@@ -30,18 +34,31 @@ const AddEmployee = () => {
     setImagePreview(URL.createObjectURL(selectedImage));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (newEmployee.username && newEmployee.name && newEmployee.email && newEmployee.role) {
+    try {
+      const photoUrl = await uploadToCloudinary(newEmployee.avatar);
+      const success = await addEmployee(
+      newEmployee.username,
+      newEmployee.name, // Thêm trường name
+      newEmployee.email,
+      newEmployee.role,
+      newEmployee.password, // Mật khẩu mặc định
+      newEmployee.isActive,
+      photoUrl
+    );
+    console.log("API response:", success);
+    if (success) {
       setSuccessMessage("A new employee was added successfully!");
-      setErrorMessage("");
-      setNewEmployee({ username: "", name: "", email: "", role: "", avatar: null });
+      setNewEmployee({ username: "", name: "", email: "", role: "", password: "123456", isActive: true, avatar: "" });
       setImagePreview("");
+      setErrorMessage("");
     } else {
-      setErrorMessage("Please fill in all required fields.");
-      setSuccessMessage("");
+      setErrorMessage("Error adding new employee");
     }
-
+  } catch (error) {
+    setErrorMessage(error.message);
+  }
     setTimeout(() => {
       setSuccessMessage("");
       setErrorMessage("");
@@ -108,7 +125,7 @@ const AddEmployee = () => {
                 </label>
                 <RoleSelector
                   handleRoleChange={handleRoleChange}
-                  selectedRole={newEmployee.role} // Truyền giá trị role hiện tại
+                  selectedRole={newEmployee.role} 
                 />
               </div>
               <div className="mb-3">

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import RoomTypeSelector from "../common/RoomTypeSelector";
+import { getRoomById, updateRoom } from "../../configs/APIs"
 
 const EditRoom = () => {
     const [room, setRoom] = useState({
@@ -14,13 +15,6 @@ const EditRoom = () => {
     const [errorMessage, setErrorMessage] = useState("");
     const { roomId } = useParams();
 
-    // Dummy room types data
-    const roomTypes = [
-        { id: "1", nameRoomType: "Single" },
-        { id: "2", nameRoomType: "Double" },
-        { id: "3", nameRoomType: "Suite" },
-    ];
-
     const handleImageChange = (e) => {
         const selectedImage = e.target.files[0];
         setRoom({ ...room, photo: selectedImage });
@@ -33,31 +27,37 @@ const EditRoom = () => {
     };
 
     useEffect(() => {
-        // Simulate fetching room data by ID
-        const fetchRoom = () => {
-            // Replace with actual data fetching logic
-            const fetchedRoom = {
-                nameRoom: "Deluxe Room",
-                roomType: "2",
-                status: "0",
-                photo: "dummy-image.jpg", // replace with actual image URL
-            };
-            setRoom(fetchedRoom);
-            setImagePreview(fetchedRoom.photo);
-        };
+        const fetchRoom = async () => {
+			try {
+				const roomData = await getRoomById(roomId)
+				setRoom(roomData)
+				setImagePreview(roomData.photo)
+				return(roomData.data)
+			} catch (error) {
+				console.error(error)
+			}
+		}
 
-        fetchRoom();
+		fetchRoom()
     }, [roomId]);
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        // Simulate updating the room data
-        setSuccessMessage("Room updated successfully!");
-        setErrorMessage("");
-        setTimeout(() => {
-            setSuccessMessage("");
-            setErrorMessage("");
-        }, 3000);
+        try {
+			const response = await updateRoom(roomId, room)
+			if (response.status === 0) {
+				setSuccessMessage("Room updated successfully!")
+				const updatedRoomData = await getRoomById(roomId)
+				setRoom(updatedRoomData)
+				// setImagePreview(updatedRoomData.photo)
+				setErrorMessage("")
+			} else {
+				setErrorMessage("Error updating room")
+			}
+		} catch (error) {
+			console.error(error)
+			setErrorMessage(error.message)
+		}
     };
 
     return (
@@ -96,7 +96,6 @@ const EditRoom = () => {
                             <RoomTypeSelector
                                 handleRoomInputChange={handleInputChange}
                                 newRoom={room}
-                                roomTypes={roomTypes} // Pass the dummy room types data
                             />
                         </div>
                         <div className="mb-3">

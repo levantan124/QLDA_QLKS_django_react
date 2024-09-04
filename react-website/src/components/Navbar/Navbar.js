@@ -14,7 +14,7 @@ const Navbar = () => {
   return (
     <nav css={styles}>
       <Container>
-        <Logo />
+        {/* <Logo /> */}
         <Menu openMenu={openMenu} />
 
         <i

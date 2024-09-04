@@ -4,7 +4,9 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
 import { SnackbarProvider } from 'notistack';
-
+import Navbar from "./components/Navbar/Navbar"
+import Footer from "./components/Footer/Footer"
+import MainContent from "./components/MainContent/MainContent"
 import Admin from "./components/admin/Admin"
 import ExistingRooms from "./components/room/ExistingRooms"
 import ExistingRoomTypes from "./components/roomtype/ExistingRoomTypes"
@@ -32,9 +34,9 @@ const App = () => {
   return (
     <SnackbarProvider maxSnack={3}>
       <BrowserRouter>
-            {/* <Navbar /> */}
+            <Navbar />
             <Routes>
-              {/* <Route exact path='/' element={<MainContent />} /> */}
+              <Route exact path='/' element={<MainContent />} />
               <Route 
                 path='/login' 
                 element={<Login setShowMainContent={setShowMainContent} />} 
@@ -58,6 +60,7 @@ const App = () => {
               <Route path="/list-invoice" element={<InvoiceList />} />
               <Route path="/customer-reservations" element={<CustomerReservations />} /> 
             </Routes>
+            <Footer/>
       </BrowserRouter>
     </SnackbarProvider>
   );
