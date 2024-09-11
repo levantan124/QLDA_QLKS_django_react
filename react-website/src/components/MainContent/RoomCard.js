@@ -11,7 +11,7 @@ const RoomCard = ({ room }) => {
     const [modalIsOpen, setModalIsOpen] = useState(false);
     const [checkinDate, setCheckinDate] = useState('');
     const [numNights, setNumNights] = useState(1);
-    const [notification, setNotification] = useState(null); // Thêm trạng thái cho thông báo
+    const [notification, setNotification] = useState(null); 
     const user = useContext(MyUserContext);
 
     const handleBookRoom = async () => {
