@@ -29,8 +29,9 @@ export const endpoints = {
     'services_of_reservation': (id) => `/reservations/${id}/services/`,
     'services' : '/services/',
     'deactive_service': (id) => `/reservation_services/${id}/`, 
-    'bills' : '/bills/'
-
+    'bills' : '/bills/',
+    'reservations': '/reservations/',
+    'send_email': '/sendemail/',
 };
 
 // Hàm tạo instance axios với Authorization header

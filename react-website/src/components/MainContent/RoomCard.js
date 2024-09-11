@@ -5,7 +5,7 @@ import Modal from 'react-bootstrap/Modal';
 import Button from 'react-bootstrap/Button';
 import Form from 'react-bootstrap/Form';
 import { MyUserContext } from '../../configs/MyContext';
-import { createReservation } from "../../configs/APIs";
+import { createReservation, api, endpoints, authAPI } from "../../configs/APIs";
 
 const RoomCard = ({ room }) => {
     const [modalIsOpen, setModalIsOpen] = useState(false);
@@ -47,6 +47,18 @@ const RoomCard = ({ room }) => {
                     type: 'success',
                     message: 'Đặt phòng thành công.'
                 });
+                const guest_info = await authAPI().get(endpoints.current_user)
+                console.log(guest_info)
+                // Tạo dữ liệu email
+                const emailData = {
+                    subject: 'Booking Confirmation',
+                    message: `Dear ${bookingData.guest},\n\nYour booking is confirmed!\n\nBooking Details:\n- Booking ID: ${bookingData.id}\n- Guest Name: ${bookingData.guest}\n- Check-in Date: ${bookingData.checkin}\n- Check-out Date: ${bookingData.checkout}\n- Room: ${bookingData.room[0].nameRoom} (${bookingData.room[0].roomType})\n\nWe look forward to welcoming you on ${bookingData.checkin}.\n\nThank you for choosing our hotel!\n\nBest regards,\nHotel Management`,
+                    recipient: guest_info.data.email,
+                };
+                
+                console.log(emailData)
+                // Gửi email xác nhận
+                await api.post(endpoints['send_email'], emailData);
             } else if (response.status === 400 && response.data.error === 'Out of stock') {
                 console.log('Tạm thời hết phòng loại này.'); // Log out of stock message
                 setNotification({

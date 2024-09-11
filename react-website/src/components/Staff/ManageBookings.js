@@ -368,7 +368,7 @@ const ReservationDetailsModal = ({ showModal, handleClose, selectedReservation, 
                             <Form.Label>Khách</Form.Label>
                             <Form.Control
                                 type="text"
-                                value={selectedReservation.guest?.username}
+                                value={selectedReservation.guest}
                                 readOnly
                             />
                         </Form.Group>
@@ -550,7 +550,7 @@ const ManageBookings = () => {
                     {reservations.map(reservation => (
                         <tr key={reservation.id}>
                             <td>{reservation.id}</td>
-                            <td>{reservation.guest?.username}</td>
+                            <td>{reservation.guest}</td>
                             <td>{reservation.room.map(r => r.nameRoom).join(', ')}</td>
                             <td>{reservation.bookDate}</td>
                             <td>{reservation.checkin}</td>
