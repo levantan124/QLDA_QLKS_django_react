@@ -18,7 +18,7 @@ export const getHeader = () => {
 
 export async function getAllEmployees() {
 	try {
-		const response = await api.get("/accounts/")
+		const response = await authAPI().get("/accounts/")
 		// console.log(response.data)
 		return response.data
 	} catch (error) {

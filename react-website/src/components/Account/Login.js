@@ -52,7 +52,7 @@ const Login = () => {
                 nav("/")
                 console.log("Đăng nhập thành công!");
                 console.info(res.data);
-                let userdata = await authAPI().get(endpoints['current_user']);
+                let userdata = await authAPI().get(endpoints.current_user);
                 cookie.save('user', userdata.data);
                 console.info(userdata.data)
                 dispatch({

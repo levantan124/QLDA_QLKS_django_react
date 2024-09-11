@@ -143,7 +143,7 @@ const ExistingRooms = () => {
                   <tr key={room.id} className="text-center">
                     <td>{room.id}</td>
                     <td>{room.nameRoom}</td>
-                    <td>{room.roomType?.nameRoomType}</td>
+                    <td>{room.roomType}</td>
                     <td>{room.status}</td>
                     <td className="gap-2">
                       <Link to={`/edit-room/${room.id}`} className="gap-2">

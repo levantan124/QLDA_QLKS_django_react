@@ -52,7 +52,7 @@ const Navbar = () => {
                 Admin
               </a>
               <div className="dropdown">
-                <a href="/existing-room">Phòng</a>
+                <a href="/existing-rooms">Phòng</a>
                 <a href="/existing-roomTypes">Loại phòng</a>
                 <a href="/existing-employees">Nhân viên</a>
               </div>

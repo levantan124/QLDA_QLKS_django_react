@@ -53,7 +53,7 @@ const Info = () => {
                 }
             });
 
-            const res = await authAPI().patch(endpoints['current-user'], formData, {
+            const res = await authAPI().patch(endpoints.patch_current_user, formData, {
                 headers: {
                     'Content-Type': 'application/form-data'
                 }
@@ -62,7 +62,7 @@ const Info = () => {
             if (res.status === 200) {
                 console.log('Cập nhật thông tin người dùng thành công:');
                 setChangedFields(new Set()); // Xóa các trường đã thay đổi
-                let userdata = await authAPI().get(endpoints['current-user']);
+                let userdata = await authAPI().get(endpoints.current_user);
                 cookie.save('user', userdata.data);
 
                 dispatch({

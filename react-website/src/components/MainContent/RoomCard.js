@@ -85,7 +85,7 @@ const RoomCard = ({ room }) => {
 
     return (
         <div css={styles}>
-            <img src={"https://res.cloudinary.com/thanhlem/"+ room.image} alt={room.nameRoom} />
+            <img src={room.image.replace("image/upload/","")} alt={room.nameRoom} />
             <div className="room-details">
                 <p>Loại phòng: {room.nameRoomType}</p>
                 <p>Giá phòng: {room.price} / đêm</p>

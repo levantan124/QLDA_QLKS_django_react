@@ -18,7 +18,8 @@ export const formatDate = (date) => {
 
 export const endpoints = {
     'login': '/o/token/',
-    'current_user': '/accounts/current-user/',
+    'current_user': '/accounts/current_user/',
+    'patch_current_user': '/accounts/patch-current-user/',
     'signup': '/accounts/',
     'list_reservations' : '/reservations/',
     'deactivate_reservation': (id) => `/reservations/${id}/deactivate/`, // Thêm hàm cho deactivate với tham số id

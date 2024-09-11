@@ -4,6 +4,7 @@ import { Col, Row } from "react-bootstrap";
 import RoomFilter from "../../components/common/RoomFilter";
 import RoomPaginator from "../common/RoomPaginator";
 import { FaEdit, FaEye, FaPlus, FaTrashAlt } from "react-icons/fa";
+import {css} from "@emotion/core"
 import { Link } from "react-router-dom";
 
 const ExistingRoomTypes = () => {
@@ -147,7 +148,11 @@ const ExistingRoomTypes = () => {
                     <td>{roomType.nameRoomType}</td>
                     <td>{roomType.price}</td>
                     <td>{roomType.quantity}</td>
-                    <td>{roomType.image}</td>
+                    <img
+                      src = {roomType.image.replace("image/upload/", "")}
+                      alt ="Room"
+                      style={{ maxWidth: "200px", maxHeight: "200px" }}
+                    />
                     <td className="gap-2">
                       <Link to={`/edit-roomtype/${roomType.id}`} className="gap-2">
                         <span className="btn btn-info btn-sm">
