@@ -470,9 +470,12 @@ const ManageBookings = () => {
         
         try {
             console.log('Cập nhật:', updatedReservation);
-            const response1 = await authAPI().post(endpoints['update_reservation'](updatedReservation.id));
+            const payload = {
+                statusCheckin: updatedReservation.statusCheckin // Hoặc giá trị checkin mới từ form
+            };
+            const response1 = await authAPI().patch(`/reservations/${updatedReservation.id}/update-checkin/`,payload);
             console.log('Cập nhật thành công:', response1.data);
-        
+            alert('Checkin updated successfully!');
             const response2 = await authAPI().get(endpoints['list_reservations']);
             setReservations(response2.data);
         } catch (error) {

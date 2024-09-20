@@ -8,7 +8,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.views import APIView
 from . import serializers, perm
-from .models import *
+from .models import Account, RoomType, Room, ReservationService, Service, Bill, Reservation
 from .serializers import (
     AccountSerializer,
     RoomTypeSerializer,
@@ -348,6 +348,29 @@ class ReservationViewSet(viewsets.ViewSet,
             return Response(serializer.data)
         else:
             raise PermissionDenied("Chỉ khách hàng mới có quyền truy cập endpoint này.")
+        
+    @action(detail=True, methods=['patch'], url_path='update-checkin')
+    def update_checkin(self, request, pk=None):
+        try:
+            reservation = self.get_object()  # Lấy bản ghi Reservation từ ID (pk)
+        except Reservation.DoesNotExist:
+            return Response({'detail': 'Reservation not found.'}, status=status.HTTP_404_NOT_FOUND)
+        
+        # Kiểm tra quyền: chỉ receptionist hoặc khách hàng mới có thể cập nhật checkin
+        if request.user.role not in [Account.Roles.KhachHang, Account.Roles.LeTan]:
+            return Response({'detail': 'Permission denied.'}, status=status.HTTP_403_FORBIDDEN)
+        
+        # Lấy giá trị mới cho checkin từ request
+        new_checkin = request.data.get('checkin')
+        if not new_checkin:
+            return Response({'detail': 'Checkin date is required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Cập nhật giá trị mới cho checkin
+        reservation.checkin = new_checkin
+        reservation.save()
+
+        return Response({'status': 'Checkin date updated successfully.', 'checkin': reservation.checkin}, 
+                        status=status.HTTP_200_OK)
 
 
 class ServiceViewSet(viewsets.ViewSet,

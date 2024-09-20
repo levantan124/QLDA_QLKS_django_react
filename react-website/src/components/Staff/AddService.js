@@ -24,6 +24,7 @@ const AddService = () => {
         const fetchReservations = async () => {
             try {
                 const response = await authAPI().get(endpoints['list_reservations']);
+                console.log(response.data)
                 setReservations(response.data);
             } catch (err) {
                 setError('Failed to fetch reservations');
@@ -161,7 +162,7 @@ const AddService = () => {
                                 <option value="">Chọn phiếu</option>
                                 {reservations.map((reservation) => (
                                     <option key={reservation.id} value={reservation.id}>
-                                        {reservation.guest?.name} - {reservation.room.map(r => r.nameRoom).join(', ')}
+                                        {reservation.guest} - {reservation.room.map(r => r.nameRoom).join(', ')}
                                     </option>
                                 ))}
                             </select>
