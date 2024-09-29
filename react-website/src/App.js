@@ -32,6 +32,7 @@ import AddRoom from "./components/room/AddRoom"
 import AddRoomType from "./components/roomtype/AddRoomType"
 import AddEmployee from "./components/employee/AddEmployee"
 import PaymentForm from "./components/booking/PaymentForm"
+import PaymentResult from "./components/booking/PaymentResult"
 
 const App = () => {
   const [user, dispatch] = useReducer(MyUserReducer, cookie.load("user") || null);
@@ -62,6 +63,7 @@ const App = () => {
               <Route path="/list-invoice" element={<InvoiceList />} />
 
               <Route path="/payment-form" element={<PaymentForm />} />
+              <Route path="/payment-return" element={<PaymentResult />} />
 
 
               <Route path="/admin" element={<Admin />} />
