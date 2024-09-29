@@ -32,6 +32,8 @@ export const endpoints = {
     'bills' : '/bills/',
     'reservations': '/reservations/',
     'send_email': '/sendemail/',
+    'googleCallbackLogin': `${BASE_URL}google/callback/login`,
+
 };
 
 // Hàm tạo instance axios với Authorization header

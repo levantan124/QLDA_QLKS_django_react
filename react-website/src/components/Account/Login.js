@@ -73,7 +73,21 @@ const Login = () => {
     const register = () => {
         nav("/signup");
     };
+    console.log(process.env.REACT_APP_GOOGLE_CLIENT_ID);
 
+    const handleGoogleLogin = async () => {
+        const googleCallbackLogin = endpoints['googleCallbackLogin'];
+		const redirectUri = encodeURIComponent(googleCallbackLogin);
+
+		const clientId = process.env.REACT_APP_GOOGLE_CLIENT_ID;
+        console.log(clientId)
+		// Lấy URL frontend hiện tại để truyền qua backend
+		const currentFrontendUrl = encodeURIComponent(window.location.origin);
+
+		const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}&scope=openid%20https://www.googleapis.com/auth/userinfo.email%20https://www.googleapis.com/auth/userinfo.profile&access_type=offline&prompt=select_account&state=${currentFrontendUrl}`;
+        
+		window.location.href = authUrl;
+    };
 
     return (
         <Container
@@ -127,6 +141,10 @@ const Login = () => {
                                 Quên tài khoản? Đăng ký
                             </a>
                         </div>
+
+                        <Button variant="primary" className="w-100" type="button" onClick={handleGoogleLogin} style={{ margin: "10px 0 10px 0" }}>
+                            Đăng nhập với Google
+                        </Button>
                     </Form>
                 </div>
             </Row>
