@@ -30,7 +30,7 @@ const PaymentResult = () => {
     }, [location.search]);
 
     return (
-        <div className="payment-result-container">
+        <div className="container" style={{marginTop:"100px", padding:"20px", maxWidth:"500px"}}>
             {paymentResult ? (
                 <div>
                     <h3>{paymentResult.title}</h3>
