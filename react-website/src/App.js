@@ -66,16 +66,17 @@ const App = () => {
               <Route path="/payment-return" element={<PaymentResult />} />
 
 
-              <Route path="/admin" element={<Admin />} />
-              <Route path="/edit-room/:roomId" element={<EditRoom />} />
-              <Route path="/edit-roomtype/:roomTypeId" element={<EditRoomType />} />
-              <Route path="/edit-employee/:employeeId" element={<EditEmployee />} />
-              <Route path="/existing-rooms" element={<ExistingRooms />} />
-              <Route path="/existing-roomtypes" element={<ExistingRoomTypes />} />
-              <Route path="/existing-employees" element={<ExistingEmployees />} />
-              <Route path="/add-room" element={<AddRoom />} />
-              <Route path="/add-roomtype" element={<AddRoomType />} />
-              <Route path="/add-employee" element={<AddEmployee />} />
+              <Route path="/admin" element={<Admin />} >
+                <Route path="edit-room/:roomId" element={<EditRoom />} />
+                <Route path="edit-roomtype/:roomTypeId" element={<EditRoomType />} />
+                <Route path="edit-employee/:employeeId" element={<EditEmployee />} />
+                <Route path="existing-rooms" element={<ExistingRooms />} />
+                <Route path="existing-roomtypes" element={<ExistingRoomTypes />} />
+                <Route path="existing-employees" element={<ExistingEmployees />} />
+                <Route path="add-room" element={<AddRoom />} />
+                <Route path="add-roomtype" element={<AddRoomType />} />
+                <Route path="add-employee" element={<AddEmployee />} />
+              </Route>
             </Routes>
             <Footer />
           </MyDispatchContext.Provider>
