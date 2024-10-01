@@ -8,11 +8,41 @@ import moment from 'moment';
 import { useSnackbar } from 'notistack';
 
 const InvoiceDetailsModal = ({ showModal, handleClose, selectedReservation, services }) => {
+    const [roomPrices, setRoomPrices] = useState([]);
+    useEffect(() => {
+        const fetchRoomTypeByName = async (roomTypeName) => {
+            try {
+                const response = await authAPI().get('/roomtypes/search-by-name/', {
+                    params: { name: roomTypeName }
+                });
+                return response.data;
+            } catch (error) {
+                console.error('Error fetching room type by name:', error);
+                return null;
+            }
+        };
 
+        const fetchRoomPrices = async () => {
+            const fetchedPrices = await Promise.all(
+                selectedReservation.room.map(async (room) => {
+                    try {
+                        const roomTypeData = await fetchRoomTypeByName(room.roomType);
+                        setRoomPrices(roomTypeData?.price);
+                        return { ...room, price: roomTypeData?.price || 0 };
+                    } catch (error) {
+                        console.error('Error fetching room type:', error);
+                        return { ...room, price: 0 };
+                    }
+                })
+            );
+            
+        };
+        if (selectedReservation) {
+            fetchRoomPrices();  // Chỉ gọi hàm nếu selectedReservation đã được chọn
+        }
+    }, [selectedReservation]);
 
-    // Kiểm tra dữ liệu của selectedReservation
-    console.log("Selected Reservation:", selectedReservation);
-    console.log("Selected Reservation Rooms:", selectedReservation?.room);
+    
 
     // Calculate room cost
     const checkinDate = moment(selectedReservation?.checkin);
@@ -21,28 +51,16 @@ const InvoiceDetailsModal = ({ showModal, handleClose, selectedReservation, serv
     console.log("Number of Days:", numberOfDays);  // Kiểm tra số ngày tính toán
 
 
-    // const roomCost = selectedReservation?.room.reduce((total, room) => total + room.price * numberOfDays, 0) || 0;
 
-    // Tính chi phí phòng: giá phòng nhân với số ngày
-    const roomCost = selectedReservation?.room?.reduce((total, room) => {
-        console.log("Room Price:", room.roomtype?.price);  // Kiểm tra giá của từng phòng
-        return total + (room.price || 0) * numberOfDays;
-    }, 0) || 0;
-
-    console.log("Room Cost:", roomCost);  // Hiện chi phí phòng để kiểm tra
 
     const { enqueueSnackbar } = useSnackbar();
 
-    // Calculate service cost
     const serviceCost = services.reduce((total, service) => total + service.price * service.quantity, 0);
 
-    // Calculate total cost
-    const totalCost = roomCost + serviceCost;
+    const totalCost = (roomPrices*numberOfDays) + serviceCost;
 
 
-    console.log("Service Cost:", serviceCost);
-    console.log("Room Cost:", roomCost);
-    console.log("Total Cost:", totalCost);
+    
 
     const confirmBill = async () => {
         try {
@@ -174,42 +192,27 @@ const ManageInvoices = () => {
     const handleShow = async (reservation) => {
         setSelectedReservation(reservation);
         setShowModal(true);
+
         try {
             const response = await authAPI().get(endpoints.services_of_reservation(reservation.id));
-            console.log("Các dịch vụ có trong phiếu: ", response.data);
-            setServices(response.data);
+            const services = response.data;
+
+            const detailedServices = await Promise.all(
+                services.map(async (service) => {
+                    const serviceDetail = await authAPI().get(`/services/${service.id}/`);
+                    return {
+                        ...service,
+                        nameService: serviceDetail.data.nameService, 
+                    };
+                })
+            );
+
+            console.log("Dịch vụ chi tiết: ", detailedServices);
+            setServices(detailedServices);
         } catch (error) {
             console.error('Failed to fetch services', error);
         }
     };
-
-
-
-    // const handleShow = async (reservation) => {
-    //     setSelectedReservation(reservation);
-    //     setShowModal(true);
-
-    //     try {
-    //         const response = await authAPI().get(endpoints.services_of_reservation(reservation.id));
-    //         const services = response.data;
-
-    //         // Sử dụng Promise.all để lấy chi tiết của từng dịch vụ
-    //         const detailedServices = await Promise.all(
-    //             services.map(async (service) => {
-    //                 const serviceDetail = await authAPI().get(endpoints['service_detail'](service.service));
-    //                 return {
-    //                     ...service,
-    //                     nameService: serviceDetail.data.nameService, // Gán thêm thông tin chi tiết về dịch vụ
-    //                 };
-    //             })
-    //         );
-
-    //         console.log("Dịch vụ chi tiết: ", detailedServices);
-    //         setServices(detailedServices);
-    //     } catch (error) {
-    //         console.error('Failed to fetch services', error);
-    //     }
-    // };
 
     const handleClose = () => {
         setShowModal(false);
