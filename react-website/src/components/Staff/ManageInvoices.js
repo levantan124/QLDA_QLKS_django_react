@@ -1,6 +1,6 @@
 /** @jsx jsx */
 import { css, jsx } from '@emotion/react';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { authAPI, endpoints } from '../../configs/APIs';
 import { Modal, Button, Form } from 'react-bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -141,7 +141,7 @@ const InvoiceDetailsModal = ({ showModal, handleClose, selectedReservation, serv
                             <Form.Label>Trạng thái</Form.Label>
                             <Form.Control
                                 type="text"
-                                value={selectedReservation.statusCheckin ? 'Đã đặt' : 'Chưa đặt'}
+                                value={selectedReservation.statusCheckin ? 'Đã checkin' : 'Chưa checkin'}
                                 readOnly
                             />
                         </Form.Group>
@@ -150,8 +150,7 @@ const InvoiceDetailsModal = ({ showModal, handleClose, selectedReservation, serv
                             {services.length > 0 ? (
                                 services.map(service => (
                                     <div key={service.id} css={serviceStyle}>
-                                        <p>                {service.id === 1 ? "Hồ bơi" : service.id === 2 ? "Buffet" : `Dịch vụ ${service.id}`}:
-                                            {service.price.toLocaleString()} VND x {service.quantity}</p>
+                                        <p>{service.nameService}: {service.price.toLocaleString()} VND x {service.quantity}</p>
                                     </div>
                                 ))
                             ) : (
@@ -256,10 +255,23 @@ const ManageInvoices = () => {
                             <td>{reservation.id}</td>
                             <td>{reservation.guest}</td>
                             <td>{reservation.room.map(r => r.nameRoom).join(', ')}</td>
-                            <td>{reservation.statusCheckin ? 'Đã đặt' : 'Chưa đặt'}</td>
+                            <td>{reservation.statusCheckin ? 'Đã checkin' : 'Chưa checkin'}</td>
                             <td>
-                                <Button variant="primary" onClick={() => handleShow(reservation)}>Xuất Hóa Đơn</Button>
-                            </td>
+                {reservation.statusCheckin ? (
+                    // Nếu đã check in, hiển thị nút "Xuất Hóa Đơn"
+                    <Button variant="primary" onClick={() => handleShow(reservation)}>
+                        Xuất Hóa Đơn
+                    </Button>
+                ) : (
+                    // Nếu chưa check in, vô hiệu hóa nút và hiển thị thông báo
+                    <>
+                        <Button variant="secondary" disabled>
+                            Xuất Hóa Đơn
+                        </Button>
+                       
+                    </>
+                )}
+            </td>
                         </tr>
                     ))}
                 </tbody>

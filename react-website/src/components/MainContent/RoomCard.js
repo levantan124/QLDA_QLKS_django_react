@@ -17,6 +17,19 @@ const RoomCard = ({ room }) => {
     const user = useContext(MyUserContext);
     const navigate = useNavigate();
 
+    const handleBook = async () => {
+        console.log(user.role)
+        if (user.role !== 3) {
+            setNotification({
+                type: 'error',
+                message: 'Bạn phải đăng nhập bằng tài khoản khách hàng.'
+            });
+            return;
+        } else {
+            setModalIsOpen(true)
+        }
+    }
+
     const handleBookRoom = async () => {
         if (!user) {
             setNotification({
@@ -116,7 +129,7 @@ const RoomCard = ({ room }) => {
                 <p>Loại phòng: {room.nameRoomType}</p>
                 <p>Giá phòng: {room.price} / đêm</p>
                 <p>Số lượng người: {room.quantity} tối đa</p>
-                <Button variant="primary" onClick={() => setModalIsOpen(true)}>
+                <Button variant="primary" onClick={handleBook}>
                     Đặt phòng
                 </Button>
             </div>

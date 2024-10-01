@@ -162,7 +162,7 @@ const AddService = () => {
                                 <option value="">Chọn phiếu</option>
                                 {reservations.map((reservation) => (
                                     <option key={reservation.id} value={reservation.id}>
-                                        {reservation.guest} - {reservation.room.map(r => r.nameRoom).join(', ')}
+                                        {reservation.guest} - {reservation.room.map(r => r.nameRoom).join(', ')} - {reservation.checkin}
                                     </option>
                                 ))}
                             </select>
