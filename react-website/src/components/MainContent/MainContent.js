@@ -36,12 +36,9 @@ const MainContent = () => {
                     console.error("Lỗi khi lấy thông tin người dùng:", error);
                 }
 
-                // Sau khi lưu token, có thể xoá token khỏi URL để giữ sạch
                 // queryParams.delete("token");
                 window.history.replaceState(null, null, window.location.pathname);
-				// window.history.replaceState(null, '', `${window.location.pathname}?${queryParams.toString()}`);
             } 
-            // Điều hướng tới trang chủ
             navigate("/");
         };
 
