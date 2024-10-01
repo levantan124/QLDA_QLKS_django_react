@@ -8,11 +8,29 @@ import moment from 'moment';
 import { useSnackbar } from 'notistack';
 
 const InvoiceDetailsModal = ({ showModal, handleClose, selectedReservation, services }) => {
+
+
+    // Kiểm tra dữ liệu của selectedReservation
+    console.log("Selected Reservation:", selectedReservation);
+    console.log("Selected Reservation Rooms:", selectedReservation?.room);
+
     // Calculate room cost
     const checkinDate = moment(selectedReservation?.checkin);
     const checkoutDate = moment(selectedReservation?.checkout);
     const numberOfDays = checkoutDate.diff(checkinDate, 'days');
-    const roomCost = selectedReservation?.room.reduce((total, room) => total + room.price * numberOfDays, 0) || 0;
+    console.log("Number of Days:", numberOfDays);  // Kiểm tra số ngày tính toán
+
+
+    // const roomCost = selectedReservation?.room.reduce((total, room) => total + room.price * numberOfDays, 0) || 0;
+
+    // Tính chi phí phòng: giá phòng nhân với số ngày
+    const roomCost = selectedReservation?.room?.reduce((total, room) => {
+        console.log("Room Price:", room.roomtype?.price);  // Kiểm tra giá của từng phòng
+        return total + (room.price || 0) * numberOfDays;
+    }, 0) || 0;
+
+    console.log("Room Cost:", roomCost);  // Hiện chi phí phòng để kiểm tra
+
     const { enqueueSnackbar } = useSnackbar();
 
     // Calculate service cost
@@ -20,6 +38,11 @@ const InvoiceDetailsModal = ({ showModal, handleClose, selectedReservation, serv
 
     // Calculate total cost
     const totalCost = roomCost + serviceCost;
+
+
+    console.log("Service Cost:", serviceCost);
+    console.log("Room Cost:", roomCost);
+    console.log("Total Cost:", totalCost);
 
     const confirmBill = async () => {
         try {
@@ -109,7 +132,8 @@ const InvoiceDetailsModal = ({ showModal, handleClose, selectedReservation, serv
                             {services.length > 0 ? (
                                 services.map(service => (
                                     <div key={service.id} css={serviceStyle}>
-                                        <p>{service.nameService}: {service.price.toLocaleString()} VND x {service.quantity}</p>
+                                        <p>                {service.id === 1 ? "Hồ bơi" : service.id === 2 ? "Buffet" : `Dịch vụ ${service.id}`}:
+                                            {service.price.toLocaleString()} VND x {service.quantity}</p>
                                     </div>
                                 ))
                             ) : (
@@ -159,6 +183,34 @@ const ManageInvoices = () => {
         }
     };
 
+
+
+    // const handleShow = async (reservation) => {
+    //     setSelectedReservation(reservation);
+    //     setShowModal(true);
+
+    //     try {
+    //         const response = await authAPI().get(endpoints.services_of_reservation(reservation.id));
+    //         const services = response.data;
+
+    //         // Sử dụng Promise.all để lấy chi tiết của từng dịch vụ
+    //         const detailedServices = await Promise.all(
+    //             services.map(async (service) => {
+    //                 const serviceDetail = await authAPI().get(endpoints['service_detail'](service.service));
+    //                 return {
+    //                     ...service,
+    //                     nameService: serviceDetail.data.nameService, // Gán thêm thông tin chi tiết về dịch vụ
+    //                 };
+    //             })
+    //         );
+
+    //         console.log("Dịch vụ chi tiết: ", detailedServices);
+    //         setServices(detailedServices);
+    //     } catch (error) {
+    //         console.error('Failed to fetch services', error);
+    //     }
+    // };
+
     const handleClose = () => {
         setShowModal(false);
         setServices([]);
@@ -199,7 +251,7 @@ const ManageInvoices = () => {
                     {reservations.map(reservation => (
                         <tr key={reservation.id}>
                             <td>{reservation.id}</td>
-                            <td>{reservation.guest?.username}</td>
+                            <td>{reservation.guest}</td>
                             <td>{reservation.room.map(r => r.nameRoom).join(', ')}</td>
                             <td>{reservation.statusCheckin ? 'Đã đặt' : 'Chưa đặt'}</td>
                             <td>
