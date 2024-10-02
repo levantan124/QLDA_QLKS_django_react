@@ -58,7 +58,7 @@ const RoomCard = ({ room }) => {
             const response = await createReservation(bookingData);
             console.log(response.data)
             if (response.status === 201) {
-                console.log('Đặt phòng thành công:', response.data); // Log successful booking response
+                console.log('Đặt phòng thành công:', response.data); 
                 setNotification({
                     type: 'success',
                     message: 'Đặt phòng thành công.'
@@ -87,7 +87,7 @@ const RoomCard = ({ room }) => {
                     }
                   });
             } else if (response.status === 400 && response.data.error === 'Out of stock') {
-                console.log('Tạm thời hết phòng loại này.'); // Log out of stock message
+                console.log('Tạm thời hết phòng loại này.'); 
                 setNotification({
                     type: 'warning',
                     message: 'Tạm thời hết phòng loại này.'

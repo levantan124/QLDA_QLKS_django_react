@@ -49,7 +49,7 @@ const EditRoom = () => {
 		try {
 			const response = await updateRoomType(roomTypeId, roomType)
             console.log('Updated Room Type:', response);
-			if (response.status === 0) {
+			if (response.status === 200) {
 				setSuccessMessage("Room updated successfully!")
 				const updatedRoomTypeData = await getRoomTypeById(roomTypeId)
 				setRoomType(updatedRoomTypeData)
@@ -217,7 +217,7 @@ const EditRoom = () => {
 							/>
 						)}
 						<div className="d-grid gap-2 d-md-flex mt-2">
-							<Link to={"/existing-roomtypes"} className="btn btn-outline-info ml-5">
+							<Link to={"/admin/existing-roomtypes"} className="btn btn-outline-info ml-5">
 								Back
 							</Link>
 							<button type="submit" className="btn btn-outline-warning">

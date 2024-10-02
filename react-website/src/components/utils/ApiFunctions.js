@@ -225,7 +225,7 @@ export async function updateRoomType(roomTypeId, roomTypeData) {
                 'Content-Type': 'application/json'
             }
         });
-        return response.data;
+        return response;
     } catch (error) {
         console.error('Error updating room type:', error);
         throw error;
@@ -275,6 +275,7 @@ export async function deleteRoom(roomId) {
 /* This function update a room */
 export async function updateRoom(roomId, roomData) {
     const formData = new FormData();
+	console.log(roomData)
     formData.append("nameRoom", roomData.nameRoom);
     formData.append("roomType", roomData.roomType);
     formData.append("status", roomData.status);

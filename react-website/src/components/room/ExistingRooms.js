@@ -109,7 +109,7 @@ const ExistingRooms = () => {
                 className="d-flex justify-content-md-end justify-content-center mb-3"
               >
                 <Link
-                  to={"/add-room"}
+                  to={"/admin/add-room"}
                   className="btn btn-primary"
                   style={{
                     backgroundColor: "#007bff",
@@ -146,7 +146,7 @@ const ExistingRooms = () => {
                     <td>{room.roomType}</td>
                     <td>{room.status}</td>
                     <td className="gap-2">
-                      <Link to={`/edit-room/${room.id}`} className="gap-2">
+                      <Link to={`/admin/edit-room/${room.id}`} className="gap-2">
                         <span className="btn btn-info btn-sm">
                           <FaEye />
                         </span>

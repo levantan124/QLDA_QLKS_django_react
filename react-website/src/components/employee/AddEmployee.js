@@ -145,7 +145,7 @@ const AddEmployee = () => {
                 {imagePreview && <img src={imagePreview} alt="Avatar Preview" className="mt-3" />}
               </div>
               <div className="d-grid gap-2 d-md-flex mt-2">
-                <Link to={"/existing-employees"} className="btn btn-outline-info">
+                <Link to={"/admin/existing-employees"} className="btn btn-outline-info">
                   Existing employees
                 </Link>
                 <button type="submit" className="btn btn-outline-primary ml-5">

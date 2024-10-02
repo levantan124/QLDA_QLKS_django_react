@@ -112,7 +112,7 @@ const ExistingRoomTypes = () => {
                 className="d-flex justify-content-md-end justify-content-center mb-3"
               >
                 <Link
-                  to={"/add-roomtype"}
+                  to={"/admin/add-roomtype"}
                   className="btn btn-primary"
                   style={{
                     backgroundColor: "#007bff",
@@ -154,7 +154,7 @@ const ExistingRoomTypes = () => {
                       style={{ maxWidth: "200px", maxHeight: "200px" }}
                     />
                     <td className="gap-2">
-                      <Link to={`/edit-roomtype/${roomType.id}`} className="gap-2">
+                      <Link to={`/admin/edit-roomtype/${roomType.id}`} className="gap-2">
                         <span className="btn btn-info btn-sm">
                           <FaEye />
                         </span>

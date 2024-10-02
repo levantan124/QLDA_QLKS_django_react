@@ -110,7 +110,7 @@ const ExistingEmployees = () => {
                 className="d-flex justify-content-md-end justify-content-center mb-3"
               >
                 <Link
-                  to={"/add-employee"}
+                  to={"/admin/add-employee"}
                   className="btn btn-primary"
                   style={{
                     backgroundColor: "#007bff",
@@ -145,7 +145,7 @@ const ExistingEmployees = () => {
                     <td>{employee.name}</td>
                     <td>{employee.role === 1 ? "Admin" : "Lễ tân"}</td>
                     <td className="gap-2">
-                      <Link to={`/edit-employee/${employee.id}`} className="gap-2">
+                      <Link to={`/admin/edit-employee/${employee.id}`} className="gap-2">
                         <span className="btn btn-info btn-sm">
                           <FaEye />
                         </span>

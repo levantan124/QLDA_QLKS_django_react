@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react"
-import { addRoomType, getRoomTypes, uploadToCloudinary } from "../utils/ApiFunctions"
+import { addRoomType, getRoomTypes, uploadToCloudinary, api } from "../utils/ApiFunctions"
 // import RoomTypeSelector from "../common/RoomTypeSelector"
 import { Link } from "react-router-dom"
 import axios from 'axios';
@@ -34,7 +34,7 @@ const AddRoomType = () => {
     // Fetch room types from the API
     const fetchRoomTypes = async () => {
       try {
-        const response = await axios.get("http://127.0.0.1:8000/roomtypes/")
+        const response = await api.get("/roomtypes/")
         // setRoomTypes(response.data);
       } catch (error) {
         console.error("Error fetching room types:", error);
@@ -147,7 +147,7 @@ const AddRoomType = () => {
 								)}
 							</div>
 				  <div className="d-grid gap-2 d-md-flex mt-2">
-					<Link to={"/existing-roomtypes"} className="btn btn-outline-info">
+					<Link to={"/admin/existing-roomtypes"} className="btn btn-outline-info">
 					  Existing roomtypes
 					</Link>
 					<button type="submit" className="btn btn-outline-primary ml-5">

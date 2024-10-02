@@ -43,7 +43,7 @@ const RoomTypeSelector = ({ handleRoomInputChange, newRoom }) => {
 						value={newRoom.roomType}>
 						<option value="">Select a room type</option>
 						{roomTypes.map((type) => (
-							<option key={type.id} value={type.id}>
+							<option key={type.id} value={type.nameRoomType}>
 								{type.nameRoomType}
 							</option>
 						))}

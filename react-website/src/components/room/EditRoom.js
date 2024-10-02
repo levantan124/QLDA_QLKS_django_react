@@ -21,6 +21,10 @@ const EditRoom = () => {
 		setImagePreview(URL.createObjectURL(selectedImage))
 	}
 
+	const handleRoomTypeChange = (nameRoomType) => {
+		setRoom({ ...room, roomType: nameRoomType }) // Store nameRoomType in room.roomType
+	}
+
     const handleInputChange = (event) => {
 		const { name, value } = event.target
 		setRoom({ ...room, [name]: value })
@@ -44,10 +48,10 @@ const EditRoom = () => {
 
     const handleSubmit = async (e) => {
 		e.preventDefault()
-
+		console.log(room)
 		try {
 			const response = await updateRoom(roomId, room)
-			if (response.status === 0) {
+			if (response.status === 200) {
 				setSuccessMessage("Room updated successfully!")
 				const updatedRoomData = await getRoomById(roomId)
 				setRoom(updatedRoomData)
@@ -127,7 +131,7 @@ const EditRoom = () => {
 							/>
 						)}
 						<div className="d-grid gap-2 d-md-flex mt-2">
-							<Link to={"/existing-rooms"} className="btn btn-outline-info ml-5">
+							<Link to={"/admin/existing-rooms"} className="btn btn-outline-info ml-5">
 								back
 							</Link>
 							<button type="submit" className="btn btn-outline-warning">
