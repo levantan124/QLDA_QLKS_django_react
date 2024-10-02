@@ -27,7 +27,6 @@ const Footer = () => {
                         <a href="">Pricing</a>
                         <a href="">About</a>
                         <a href="">Gallery  </a>
-                        <a href="">Liên hệ</a>
                     </div>
                 </FooterCard>
                 <FooterCard cardHeading="Subscribe">
@@ -41,7 +40,7 @@ const Footer = () => {
                 </FooterCard>
             </Container>
             <div className="copyright">
-                <p>Copyright ©2020 All rights reserved | This template is made with <i class="far fa-heart"></i> by Colorlib</p>
+                <p>Copyright ©2024 All rights reserved</p>
             </div>
         </footer>
     )
@@ -49,9 +48,10 @@ const Footer = () => {
 
 const styles = css`
     width: 100%;
-    background: #000;
+    background: #1a1a1a;
     .container {
-        padding: 150px 0;
+        bottom = 0;
+        padding: 10px 0;
         max-width: 1200px;
         display: flex;
         border-bottom: 1px solid rgb(26, 26, 26);
@@ -61,7 +61,7 @@ const styles = css`
         .firstCard {
             display: flex;
             flex-direction: column;
-            padding: 40px 0 0 0;
+            padding: 20px 0 0 0;
             p {
                 color: #ccc;
             }
