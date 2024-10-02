@@ -27,8 +27,7 @@ const Login = () => {
     };
 
     const login = async () => {
-        console.log(username); // Log username ra console để kiểm tra
-        console.log(password); // Log password ra console để kiểm tra
+        
         setError("Sai tên đăng nhập hoặc mật khẩu");
         setLoading(true);
 
@@ -73,7 +72,6 @@ const Login = () => {
     const register = () => {
         nav("/signup");
     };
-    console.log(process.env.REACT_APP_GOOGLE_CLIENT_ID);
 
     const handleGoogleLogin = async () => {
         const googleCallbackLogin = endpoints['googleCallbackLogin'];
